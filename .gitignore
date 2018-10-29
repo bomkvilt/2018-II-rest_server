@@ -1,0 +1,22 @@
+/target/
+
+# Idea project files
+.idea/
+.vscode/
+
+# Output
+tech-db-forum*
+report*.html
+perf.data*
+
+# golang
+vendor/
+debug
+debug.test
+
+# generation
+generated
+_assets
+*.tmp
+*.gen.go
+*.tmp.go
