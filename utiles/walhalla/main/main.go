@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	assets "Wave/utiles/walhalla/_assets"
+	assets "Forum/utiles/walhalla/_assets"
 )
 
 func generateTemplates() *template.Template {
@@ -34,7 +34,7 @@ func main() {
 		wg.Add(1)
 		go func(pack string) {
 			defer wg.Done()
-			walhalla(template, extractDir(pack))
+			walhalla(template, pack)
 		}(pack)
 	}
 	wg.Wait()

@@ -9,7 +9,7 @@ const testingYaml = `
 swagger: '2.0'
 info:
   version: "2018-10-23"
-  title: Wave Application
+  title: Forum Application
 host: localhost:9600
 basePath: /
 tags:
@@ -79,10 +79,10 @@ func TestParceSwaggerYaml(t *testing.T) {
 	expected := ParsedData{
 		Info: Info{
 			Version: "2018-10-23",
-			Title:   "Wave Application",
+			Title:   "Forum Application",
 		},
 		Operations: []Operation{
-			{"SignupUser", "user", "UserSignupUserHandler", "SignupUserHandlerFunc"},
+			{"SignupUser", "user", "UserSignupUserHandler", "SignupUserHandlerFunc", "SignupUserParms"},
 		},
 		Subcategories: []string{
 			"user",

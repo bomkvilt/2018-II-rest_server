@@ -17,6 +17,7 @@ debug.test
 # generation
 generated
 _assets
+*.log
 *.tmp
 *.gen.go
 *.tmp.go

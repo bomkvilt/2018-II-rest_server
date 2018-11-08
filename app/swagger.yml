@@ -4,10 +4,9 @@ info:
   description: |
     Тестовое задание для реализации проекта "Форумы" на курсе по базам данных в
     Технопарке Mail.ru (https://park.mail.ru).
-  version: "0.1.0"
+  version: "0.1.12"
 schemes:
 - http
-- https
 basePath: /api
 consumes:
 - application/json
@@ -16,12 +15,14 @@ produces:
 paths:
   /forum/create:
     post:
+      tags:
+        - forum
       summary: Создание форума
       description: |
         Создание нового форума.
       operationId: forumCreate
       consumes:
-      - 'multipart/formdata'
+      - 'application/json'
       parameters:
       - name: forum
         in: body
@@ -49,6 +50,8 @@ paths:
             $ref: '#/definitions/Forum'
   /forum/{slug}/details:
     get:
+      tags:
+        - forum
       summary: Получение информации о форуме
       description: |
         Получение информации о форуме по его идентификаторе.
@@ -74,6 +77,8 @@ paths:
             $ref: '#/definitions/Error'
   /forum/{slug}/create:
     post:
+      tags:
+        - thread
       summary: Создание ветки
       description: |
         Добавление новой ветки обсуждения на форум.
@@ -111,6 +116,8 @@ paths:
             $ref: '#/definitions/Thread'
   /forum/{slug}/users:
     get:
+      tags:
+        - forum
       summary: Пользователи данного форума
       description: |
         Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
@@ -159,6 +166,8 @@ paths:
             $ref: '#/definitions/Error'
   /forum/{slug}/threads:
     get:
+      tags:
+        - thread
       summary: Список ветвей обсужления форума
       description: |
         Получение списка ветвей обсужления данного форума.
@@ -206,6 +215,8 @@ paths:
             $ref: '#/definitions/Error'
   /post/{id}/details:
     get:
+      tags:
+        - post
       summary: Получение информации о ветке обсуждения
       description: |
         Получение информации о ветке обсуждения по его имени.
@@ -244,6 +255,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     post:
+      tags:
+        - post
       summary: Изменение сообщения
       description: |
         Изменение сообщения на форуме.
@@ -276,6 +289,8 @@ paths:
             $ref: '#/definitions/Error'
   /service/clear:
     post:
+      tags:
+        - service
       consumes:
       - application/json
       - application/octet-stream
@@ -288,6 +303,8 @@ paths:
           description: Очистка базы успешно завершена
   /service/status:
     get:
+      tags:
+        - service
       summary: Получение инфомарции о базе данных
       description: |
         Получение инфомарции о базе данных.
@@ -301,6 +318,8 @@ paths:
             $ref: '#/definitions/Status'
   /thread/{slug_or_id}/create:
     post:
+      tags:
+        - post
       summary: Создание новых постов
       description: |
         Добавление новых постов в ветку обсуждения на форум.
@@ -339,6 +358,8 @@ paths:
             $ref: '#/definitions/Error'
   /thread/{slug_or_id}/details:
     get:
+      tags:
+        - thread
       summary: Получение информации о ветке обсуждения
       description: |
         Получение информации о ветке обсуждения по его имени.
@@ -362,6 +383,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     post:
+      tags:
+        - thread
       summary: Обновление ветки
       description: |
         Обновление ветки обсуждения на форуме.
@@ -392,6 +415,8 @@ paths:
             $ref: '#/definitions/Error'
   /thread/{slug_or_id}/posts:
     get:
+      tags:
+        - post
       summary: Сообщения данной ветви обсуждения
       description: |
         Получение списка сообщений в данной ветке форуме.
@@ -458,6 +483,8 @@ paths:
             $ref: '#/definitions/Error'
   /thread/{slug_or_id}/vote:
     post:
+      tags:
+        - thread
       summary: Проголосовать за ветвь обсуждения
       description: |
         Изменение голоса за ветвь обсуждения.
@@ -491,6 +518,8 @@ paths:
             $ref: '#/definitions/Error'
   /user/{nickname}/create:
     post:
+      tags:
+        - user
       summary: Создание нового пользователя
       description: |
         Создание нового пользователя в базе данных.
@@ -522,6 +551,8 @@ paths:
             $ref: '#/definitions/Users'
   /user/{nickname}/profile:
     get:
+      tags:
+        - user
       summary: Получение информации о пользователе
       description: |
         Получение информации о пользователе форума по его имени.
@@ -545,6 +576,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     post:
+      tags:
+        - user
       summary: Изменение данных о пользователе
       description: |
         Изменение информации в профиле пользователя.

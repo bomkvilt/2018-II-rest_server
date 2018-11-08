@@ -2,14 +2,14 @@
 package restapi
 
 {{$Project     := .Project    }}
-{{$PackageName := .PackageName}}
+{{$Application := .Application}}
 
 import (
-								"{{$Project}}/utiles/walhalla"
-    code 						"{{$Project}}/{{$PackageName}}"
-								"{{$Project}}/{{$PackageName}}/generated/restapi/operations"
-    {{range .Subcategories}}	"{{$Project}}/{{$PackageName}}/generated/restapi/operations/{{.}}"	
-	code{{.}}					"{{$Project}}/{{$PackageName}}/{{.}}"
+													"{{$Project}}/utiles/walhalla"
+    									code		"{{$Application}}"
+													"{{$Application}}/generated/restapi/operations"
+    {{range .Subcategories}}						"{{$Application}}/generated/restapi/operations/{{.}}" 	
+	{{end}} {{range .ImplSubcategories}} code{{.}}	"{{$Application}}/{{.}}" 
 	{{end}}
 	
 	"crypto/tls"
@@ -42,8 +42,11 @@ func configureAPI(api *operations.{{.API}}) http.Handler {
 		code.SetupContext(&ctx)
 	{{end}}
 
-    {{range .Operations}} api.{{.Handler}} = {{.Subcategory}}.{{.Function}}( handler{{.OperationID}}(ctx) )
-    {{end}}
+    {{range .Operations}}  	{{if .Implemented}} api.{{.Handler}} = {{.Subcategory}}.{{.Function}}( handler{{.OperationID}}(ctx) )
+							{{else           }} api.{{.Handler}} = {{.Subcategory}}.{{.Function}}(func(param {{.Subcategory}}.{{.Parametr}}) middleware.Responder {
+								return middleware.NotImplemented("Handler '{{.OperationID}}' isn't implemented")
+							})								
+	{{end}} {{end}}
 	
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares), ctx)
 }
