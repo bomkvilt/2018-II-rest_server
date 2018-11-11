@@ -7,8 +7,9 @@ import (
 	"strconv"
 )
 
-type TID int
+type TID int32
 
+// CreateNewThread -
 func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 	var (
 		slug           = th.Slug
@@ -42,9 +43,39 @@ func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 	`, uid, th.Created, fid, th.Message, slug, th.Title).Scan(&th.ID); err != nil {
 		return err
 	}
+	if _, err := tx.Exec(`
+		UPDATE forums
+		SET threadCount=threadCount+1
+		WHERE fid=$1
+	`, fid); err != nil {
+		return err
+	}
 	return tx.Commit()
 }
 
+func (m *DB)UpdateThread(slugOrID string, tu *models.ThreadUpdate) (*models.Thread, error) {
+	th, err := m.GetThreadBySlugOrID(slugOrID)
+	if err != nil {
+		return nil, NotFound(err)
+	}
+
+	tx := m.db.MustBegin()
+	defer tx.Rollback()
+	if _, err := tx.Exec(`
+		UPDATE threads
+		SET title  =COALESCE(NULLIF($1,''), title  ),
+			message=COALESCE(NULLIF($2,''), message)
+		WHERE tid=$3
+	`, tu.Title, tu.Message, th.ID); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return m.GetThreadBySlugOrID(slugOrID)
+}
+
+// VoteThread - 
 func (m *DB)VoteThread(slugOrID string, vt *models.Vote) (*models.Thread, error) {
 	var (
 		th, err1 = m.GetThreadBySlugOrID(slugOrID)
@@ -109,6 +140,7 @@ func (m *DB) GetThreadByID(tid TID) (thr *models.Thread, err error) {
 	return m.getThread("tid", tid)
 }
 
+// GetThreadBySlugOrID - 
 func (m *DB) GetThreadBySlugOrID(slugOrID string) (thr *models.Thread, err error) {
 	if tid, err := strconv.Atoi(slugOrID); err == nil {
 		return m.GetThreadByID(TID(tid))

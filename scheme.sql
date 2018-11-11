@@ -1,5 +1,3 @@
--- forum -> thread -> post
-
 CREATE EXTENSION IF NOT EXISTS citext;
 
 -- user
@@ -67,6 +65,7 @@ CREATE TABLE posts (
     message     TEXT,
     isEdited    BOOLEAN,
     created     TIMESTAMP,
+	path		BIGINT[] NOT NULL,
 
     PRIMARY KEY(pid),
     FOREIGN KEY(author) REFERENCES users(uid),

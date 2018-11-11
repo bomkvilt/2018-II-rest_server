@@ -2,6 +2,8 @@ package database
 
 import (
 	"Forum/app/generated/models"
+	"Forum/app/generated/restapi/operations/forum"
+	"strconv"
 )
 
 // UID type
@@ -35,6 +37,65 @@ func (m *DB) GetAllCollisions(usr *models.User) (usrs models.Users, err error) {
 	`, usr.Nickname, usr.Email)
 	if err != nil {
 		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		tmp := &models.User{}
+		err := rows.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
+		if err != nil {
+			return nil, err
+		}
+		usrs = append(usrs, tmp)
+	}
+	return usrs, nil
+}
+
+func (m *DB) GetForumUsers(params forum.ForumGetUsersParams) (usrs models.Users, err error) {
+	_, fid, err := m.GetForumBySlug(params.Slug)
+	if err != nil {
+		return nil, NotFound(err)
+	}
+
+	var (
+		order = "ASC"
+		vars  = make([]interface{}, 1, 3)
+		parts = make(map[string]string)
+	)
+	vars[0] = &fid
+	if params.Desc != nil && *params.Desc {
+		order = "DESC"
+	}
+	if params.Since != nil {
+		sign := ">"
+		if order == "DESC" {
+			sign = "<"
+		}
+
+		usr, _, err := m.GetUserByName(*params.Since)
+		if err != nil {
+			return usrs, nil
+		}
+		parts["since"] = "AND u.nickname" + sign + "$" + strconv.Itoa(len(vars)+1)
+		vars = append(vars, usr.Nickname)
+	}
+	if params.Limit != nil {
+		parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
+		vars = append(vars, params.Limit)
+	}
+
+	rows, err := m.db.Query(`
+		SELECT DISTINCT u.nickname, u.fullname, u.about, u.email
+		FROM      users   u
+		LEFT JOIN posts   p  ON(u.uid=p.author )
+		LEFT JOIN threads t  ON(t.tid=p.thread )		
+		LEFT JOIN threads t2 ON(u.uid=t2.author)
+		WHERE (t.forum=$1 OR t2.forum=$1) `+parts["since"]+`
+		ORDER BY u.nickname `+order+`
+		`+parts["limit"]+`
+	`, vars...)
+	if err != nil {
+		return usrs, nil
 	}
 	defer rows.Close()
 

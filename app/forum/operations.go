@@ -31,3 +31,13 @@ func ForumGetOne(params forum.ForumGetOneParams, ctx *walhalla.Context, model *d
 	})
 }
 
+// walhalla:gen
+func ForumGetUsers(params forum.ForumGetUsersParams, ctx *walhalla.Context, model *database.DB) middleware.Responder {
+	res, err := model.GetForumUsers(params)
+	if err != nil {
+		return forum.NewForumGetUsersNotFound().WithPayload(&models.Error{
+			Message: "",
+		})
+	}
+	return forum.NewForumGetUsersOK().WithPayload(res)
+}

@@ -23,6 +23,17 @@ func ThreadCreate(params thread.ThreadCreateParams, ctx *walhalla.Context, model
 }
 
 // walhalla:gen
+func ThreadUpdate(params thread.ThreadUpdateParams, ctx *walhalla.Context, model *database.DB) middleware.Responder {
+	res, err := model.UpdateThread(params.SlugOrID, params.Thread)
+	if err != nil {
+		return thread.NewThreadUpdateNotFound().WithPayload(&models.Error{
+			Message: "",
+		})
+	}
+	return thread.NewThreadUpdateOK().WithPayload(res)
+}
+
+// walhalla:gen
 func ThreadGetOne(params thread.ThreadGetOneParams, ctx *walhalla.Context, model *database.DB) middleware.Responder {
 	res, err := model.GetThreadBySlugOrID(params.SlugOrID)
 	if err != nil {
