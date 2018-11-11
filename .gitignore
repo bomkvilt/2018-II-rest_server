@@ -10,7 +10,6 @@ report*.html
 perf.data*
 
 # golang
-vendor/
 debug
 debug.test
 

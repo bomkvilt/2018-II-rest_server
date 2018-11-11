@@ -40,9 +40,9 @@ func SetupContext(ctx *walhalla.Context) {
 		ctx.DB, err = sqlx.Open("postgres", conInfo{
 			host:     "127.0.0.1",
 			port:     "5432",
-			user:     "postgres",
-			password: "ps",
-			dbName:   "postgres",
+			user:     "docker",
+			password: "docker",
+			dbName:   "docker",
 		}.Marshal())
 		if err != nil {
 			panic(err)
