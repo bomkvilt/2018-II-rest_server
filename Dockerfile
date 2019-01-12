@@ -1,19 +1,21 @@
 FROM ubuntu:18.10
 
 ENV PGVER 10
-ENV GOVER 1.10
+ENV GOVER 1.11
 
-RUN apt-get -y update
+# install psql
+RUN apt-get -y update && apt-get -y install sudo wget software-properties-common
+RUN sudo add-apt-repository ppa:longsleep/golang-backports
+RUN sudo apt-get update && apt-get -y install golang-go
 ENV DEBIAN_FRONTEND 'noninteractive'
-RUN echo 'Europe/Moscow' > '/etc/timezone' && \
-    apt-get install -y postgresql-$PGVER golang-$GOVER
+RUN echo 'Europe/Moscow' > '/etc/timezone' && apt-get install -y postgresql-$PGVER golang-$GOVER git
 
 ENV GOROOT /usr/lib/go-$GOVER
 ENV GOPATH '/opt/go'
 
-COPY . $GOPATH/src/github.com/bomkvilt/tech-db-app
-RUN go build -o '${GOPATH}/bin/forum' 'github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server'
+RUN go get 'github.com/bomkvilt/tech-db-app' && go build -o '${GOPATH}/bin/forum' 'github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server'
 
+# stup psql
 USER postgres
 COPY scheme.sql .
 RUN /etc/init.d/postgresql start &&\
