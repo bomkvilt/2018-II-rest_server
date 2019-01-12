@@ -1,8 +1,8 @@
 package forum
 
 import (
-	"github.com/bomkvilt/tech-db-ap/app/database"
-	"github.com/bomkvilt/tech-db-ap/utiles/walhalla"
+	"github.com/bomkvilt/tech-db-app/app/database"
+	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
 )
 
 // walhalla:pack {model:NewModel}

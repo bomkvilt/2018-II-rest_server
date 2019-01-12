@@ -2,9 +2,9 @@ package database
 
 import (
 	"strconv"
-	"github.com/bomkvilt/tech-db-ap/utiles/walhalla"
+	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
 	"github.com/jmoiron/sqlx"
-	"github.com/bomkvilt/tech-db-ap/app/generated/models"
+	"github.com/bomkvilt/tech-db-app/app/generated/models"
 )
 
 type DB struct {

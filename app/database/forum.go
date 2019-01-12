@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/bomkvilt/tech-db-ap/app/generated/models"
+	"github.com/bomkvilt/tech-db-app/app/generated/models"
 )
 
 // FID -

@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bomkvilt/tech-db-ap/utiles/walhalla/swagger"
+	"github.com/bomkvilt/tech-db-app/utiles/walhalla/swagger"
 )
 
 const (
