@@ -13,7 +13,12 @@ RUN apt-get -y update && apt-get install -y postgresql-$PGVER golang-go git
 ENV GOROOT /usr/lib/go-$GOVER
 ENV GOPATH '/opt/go'
 
-RUN go get 'github.com/bomkvilt/tech-db-app' && go build -o '${GOPATH}/bin/forum' 'github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server'
+RUN git clone 'https://github.com/bomkvilt/tech-db-app' '${GOPATH}/src/github.com/bomkvilt/tech-db-app'
+RUN echo ${GOPATH}/src/github.com/bomkvilt/tech-db-app/
+RUN go get 'golang.org/x/net/...'
+RUN go get 'github.com/bomkvilt/tech-db-app/...'
+RUN ls -l /opt/go/src/github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server 
+RUN go build -o ${GOPATH}/bin/forum github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server
 
 # stup psql
 USER postgres
