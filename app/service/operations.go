@@ -1,10 +1,10 @@
 package service
 
 import (
-	"Forum/app/database"
-	// "Forum/app/generated/models"
-	"Forum/app/generated/restapi/operations/service"
-	"Forum/utiles/walhalla"
+	"github.com/bomkvilt/tech-db-ap/app/database"
+	// "github.com/bomkvilt/tech-db-ap/app/generated/models"
+	"github.com/bomkvilt/tech-db-ap/app/generated/restapi/operations/service"
+	"github.com/bomkvilt/tech-db-ap/utiles/walhalla"
 	"github.com/go-openapi/runtime/middleware"
 )
 

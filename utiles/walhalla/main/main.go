@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	assets "Forum/utiles/walhalla/_assets"
+	"github.com/bomkvilt/tech-db-ap/utiles/walhalla/assets"
 )
 
 func generateTemplates() *template.Template {

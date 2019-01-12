@@ -2,13 +2,13 @@ FROM ubuntu:18.10
 
 ENV PGVER 10
 ENV GOVER 1.11
+ENV DEBIAN_FRONTEND 'noninteractive'
+RUN echo 'Europe/Moscow' > '/etc/timezone'
 
 # install psql
 RUN apt-get -y update && apt-get -y install sudo wget software-properties-common
 RUN sudo add-apt-repository ppa:longsleep/golang-backports
-RUN sudo apt-get update && apt-get -y install golang-go
-ENV DEBIAN_FRONTEND 'noninteractive'
-RUN echo 'Europe/Moscow' > '/etc/timezone' && apt-get install -y postgresql-$PGVER golang-$GOVER git
+RUN apt-get -y update && apt-get install -y postgresql-$PGVER golang-go git
 
 ENV GOROOT /usr/lib/go-$GOVER
 ENV GOPATH '/opt/go'

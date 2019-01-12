@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"Forum/utiles/walhalla"
+	"github.com/bomkvilt/tech-db-ap/utiles/walhalla"
 	"net/http"
 )
 

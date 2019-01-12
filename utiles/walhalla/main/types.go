@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Forum/utiles/walhalla/swagger"
+	"github.com/bomkvilt/tech-db-ap/utiles/walhalla/swagger"
 
 	"github.com/asaskevich/govalidator"
 )

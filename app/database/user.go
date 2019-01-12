@@ -1,8 +1,8 @@
 package database
 
 import (
-	"Forum/app/generated/models"
-	"Forum/app/generated/restapi/operations/forum"
+	"github.com/bomkvilt/tech-db-ap/app/generated/models"
+	"github.com/bomkvilt/tech-db-ap/app/generated/restapi/operations/forum"
 	"strconv"
 )
 

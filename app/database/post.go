@@ -3,8 +3,8 @@ package database
 import (
 	"strconv"
 	"errors"
-	"Forum/app/generated/models"
-	"Forum/app/generated/restapi/operations/post"
+	"github.com/bomkvilt/tech-db-ap/app/generated/models"
+	"github.com/bomkvilt/tech-db-ap/app/generated/restapi/operations/post"
 )
 
 // CreateNewPost -
