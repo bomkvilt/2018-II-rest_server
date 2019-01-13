@@ -1,10 +1,10 @@
 package database
 
 import (
-	"fmt"
-	"strconv"
-	"github.com/jmoiron/sqlx"
 	"AForum/app/generated/models"
+	"fmt"
+	"github.com/jmoiron/sqlx"
+	"strconv"
 )
 
 type DB struct {
@@ -59,7 +59,7 @@ func (m *DB) GetStatus() *models.Status {
 type (
 	ErrorAlreadyExist struct{ error }
 	ErrorNotFound     struct{ error }
-	ErrorConflict	  struct{ error }
+	ErrorConflict     struct{ error }
 )
 
 func (e *ErrorAlreadyExist) Error() string { return e.error.Error() }
@@ -80,7 +80,7 @@ func check(e error) {
 
 // @ param string - cmp. sign
 // @ param int    - placeholder
-type paginatorPart func(string, string)(string, interface{})
+type paginatorPart func(string, string) (string, interface{})
 
 type paginator struct {
 	order string
@@ -93,22 +93,22 @@ func newPaginator() *paginator {
 	return &paginator{
 		order: "ASC",
 		parts: map[string]paginatorPart{},
-		vars: []interface{}{},
+		vars:  []interface{}{},
 	}
 }
 
-func (p *paginator)SetOrder(bDesc *bool) *paginator {
+func (p *paginator) SetOrder(bDesc *bool) *paginator {
 	if bDesc != nil && *bDesc {
 		p.order = "DESC"
 	}
 	return p
 }
 
-func (p *paginator)GetOrder() string {
+func (p *paginator) GetOrder() string {
 	return p.order
 }
 
-func (p *paginator)SetCpm(asc, desc string) *paginator {
+func (p *paginator) SetCpm(asc, desc string) *paginator {
 	if p.order == "asc" {
 		p.cmp = asc
 	} else {
@@ -117,24 +117,24 @@ func (p *paginator)SetCpm(asc, desc string) *paginator {
 	return p
 }
 
-func (p *paginator)SetRoot(root interface{}) *paginator {
+func (p *paginator) SetRoot(root interface{}) *paginator {
 	p.vars = append(p.vars, root)
 	return p
 }
 
-func (p *paginator)AddPart(name string, rule paginatorPart) *paginator {
+func (p *paginator) AddPart(name string, rule paginatorPart) *paginator {
 	p.parts[name] = rule
 	return p
 }
 
-func (p *paginator)AddPartNotNil(name string, rule paginatorPart, target interface{}) *paginator {
+func (p *paginator) AddPartNotNil(name string, rule paginatorPart, target interface{}) *paginator {
 	if target != nil {
 		return p.AddPart(name, rule)
 	}
 	return p
 }
 
-func (p *paginator)Part(name string) string {
+func (p *paginator) Part(name string) string {
 	if _, ok := p.parts[name]; ok {
 		str, val := p.parts[name](p.cmp, "$"+strconv.Itoa(len(p.vars)+1))
 		if val != nil {
@@ -145,6 +145,6 @@ func (p *paginator)Part(name string) string {
 	return ""
 }
 
-func (p* paginator)Vars() []interface{} {
+func (p *paginator) Vars() []interface{} {
 	return p.vars
 }

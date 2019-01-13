@@ -3,8 +3,8 @@ package router
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"AForum/internal/api"
+	"github.com/gorilla/mux"
 )
 
 type Router struct {
@@ -37,7 +37,7 @@ func New(h *api.Handler) *Router {
 
 	r.Get(`/api/service/status`, h.Status)
 	r.Post(`/api/service/clear`, h.Clear)
-	
+
 	return r
 }
 

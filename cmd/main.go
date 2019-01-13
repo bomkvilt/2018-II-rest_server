@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/handlers"
 )
 
-
 func main() {
 	var (
 		d = database.New()
