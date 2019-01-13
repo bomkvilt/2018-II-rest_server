@@ -12,11 +12,8 @@ RUN apt-get -y update && apt-get install -y postgresql-$PGVER golang-go git
 
 ENV GOROOT /usr/lib/go-$GOVER
 ENV GOPATH '/opt/go'
+ENV GO111MODULE on
 
-RUN git clone 'https://github.com/bomkvilt/tech-db-app' '${GOPATH}/src/github.com/bomkvilt/tech-db-app'
-RUN echo ${GOPATH}/src/github.com/bomkvilt/tech-db-app/
-RUN go get 'github.com/bomkvilt/tech-db-app/...'
-RUN ls -l /opt/go/src/github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server 
 
 # stup psql
 USER postgres
@@ -34,8 +31,10 @@ EXPOSE 5432
 
 # run 
 USER root
-
 EXPOSE 5000
 
-RUN go build -o ${GOPATH}/bin/forum github.com/bomkvilt/tech-db-app/app/generated/cmd/forum-server
-CMD service postgresql start && ${GOPATH}/bin/forum --scheme=http --port=5000 --host=0.0.0.0 
+COPY  . /tmp/go
+WORKDIR /tmp/go
+RUN go build -mod vendor ./cmd/
+CMD service postgresql start && cmd 
+# --scheme=http --port=5000 --host=0.0.0.0 
