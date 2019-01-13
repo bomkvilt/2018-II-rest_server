@@ -37,5 +37,8 @@ func (h *Handler) ForumGetUsers(rw http.ResponseWriter, r *http.Request) {
 		response(rw, 404, models.Error{Message: ""})
 		return
 	}
+	if res == nil {
+		res = models.Users{}
+	}
 	response(rw, 200, res)
 }

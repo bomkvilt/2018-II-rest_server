@@ -1,10 +1,12 @@
 package database
 
 import (
-	"AForum/app/generated/models"
+	"AForum/internal/models"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"strconv"
+
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq" // psql
 )
 
 type DB struct {

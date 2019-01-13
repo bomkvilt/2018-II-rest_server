@@ -91,7 +91,7 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 	}
 	vars[0] = &th.ID
 
-	switch *params.Sort {
+	switch params.Sort {
 	case "flat":
 		if params.Since != nil {
 			parts["since"] = "AND p.pid" + sign + "$" + strconv.Itoa(len(vars)+1)
@@ -148,6 +148,7 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 	}
 	defer rows.Close()
 
+	res = models.Posts{}
 	for rows.Next() {
 		tmp := &models.Post{
 			Thread: th.ID,
@@ -230,7 +231,7 @@ func (m *DB) UpdatePost(p *models.Post) error {
 		}
 	}
 	o, err := m.GetPostByID(p.ID)
-	if err != nil {
+	if err == nil {
 		*p = *o
 	}
 	return err

@@ -20,6 +20,7 @@ func (h *Handler) PostsCreate(rw http.ResponseWriter, r *http.Request) {
 
 	if _, err := h.db.GetThreadBySlugOrID(sod); err != nil {
 		response(rw, 404, models.Error{Message: "Can't find post thread by id: " + sod})
+		return
 	}
 
 	created := time.Now().Format("2006-01-02T15:04:05.999999999Z07:00")

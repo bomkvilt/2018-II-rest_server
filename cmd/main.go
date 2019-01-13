@@ -16,5 +16,6 @@ func main() {
 		h = api.New(d)
 		r = router.New(h)
 	)
+	// http.ListenAndServe(":5000", r)
 	http.ListenAndServe(":5000", handlers.RecoveryHandler()(r))
 }

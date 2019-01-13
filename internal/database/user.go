@@ -36,6 +36,7 @@ func (db *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
 	}
 	defer rows.Close()
 
+	usrs = models.Users{}
 	for rows.Next() {
 		tmp := &models.User{}
 		err := rows.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
@@ -58,26 +59,28 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 		vars  = make([]interface{}, 1, 3)
 		parts = make(map[string]string)
 	)
-	vars[0] = &f.ID
-	if params.Desc != nil && *params.Desc {
-		order = "DESC"
-	}
-	if params.Since != nil {
-		sign := ">"
-		if order == "DESC" {
-			sign = "<"
+	{ // set flags
+		vars[0] = &f.ID
+		if params.Desc != nil && *params.Desc {
+			order = "DESC"
 		}
+		if params.Since != nil {
+			sign := ">"
+			if order == "DESC" {
+				sign = "<"
+			}
 
-		u, err := db.GetUserByName(*params.Since)
-		if err != nil {
-			return usrs, nil
+			u, err := db.GetUserByName(*params.Since)
+			if err != nil {
+				return usrs, nil
+			}
+			parts["since"] = "AND u.nickname" + sign + "$" + strconv.Itoa(len(vars)+1)
+			vars = append(vars, u.Nickname)
 		}
-		parts["since"] = "AND u.nickname" + sign + "$" + strconv.Itoa(len(vars)+1)
-		vars = append(vars, u.Nickname)
-	}
-	if params.Limit != nil {
-		parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
-		vars = append(vars, params.Limit)
+		if params.Limit != nil {
+			parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
+			vars = append(vars, params.Limit)
+		}
 	}
 
 	rows, err := db.db.Query(`
@@ -91,10 +94,11 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 		`+parts["limit"]+`
 	`, vars...)
 	if err != nil {
-		return usrs, nil
+		return nil, err
 	}
 	defer rows.Close()
 
+	usrs = models.Users{}
 	for rows.Next() {
 		tmp := &models.User{}
 		err := rows.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)

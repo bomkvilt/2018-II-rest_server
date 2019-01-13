@@ -60,7 +60,7 @@ func (h *Handler) ThreadVote(rw http.ResponseWriter, r *http.Request) {
 		sod = mux.Vars(r)["slug_or_id"]
 	)
 	if th, err := h.db.VoteThread(sod, vt); err != nil {
-		response(rw, 404, models.Error{Message: ""})
+		response(rw, 404, models.Error{Message: err.Error()})
 	} else {
 		response(rw, 200, th)
 	}

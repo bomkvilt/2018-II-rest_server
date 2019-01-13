@@ -36,12 +36,16 @@ func check(e error) {
 }
 
 func response(rw http.ResponseWriter, code int, payload interface{}) {
-	rw.WriteHeader(code)
-	if payload == nil {
-		return
+	if payload != nil {
+		b, err := json.Marshal(payload)
+		check(err)
+
+		rw.Header().Set("content-type", "application/json")
+		rw.WriteHeader(code)
+
+		_, err = rw.Write(b)
+		check(err)
+	} else {
+		rw.WriteHeader(code)
 	}
-	b, err := json.Marshal(payload)
-	check(err)
-	_, err = rw.Write(b)
-	check(err)
 }

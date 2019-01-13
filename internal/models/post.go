@@ -35,7 +35,7 @@ type PostQuery struct {
 	Limit    *int
 	Since    *int64
 	SlugOrID string
-	Sort     *string
+	Sort     string
 }
 
 func (Post) FromRequest(r *http.Request) *Post {
@@ -52,7 +52,7 @@ func (Posts) FromRequest(r *http.Request) Posts {
 	check(err)
 
 	u := Posts{}
-	check(json.Unmarshal(b, u))
+	check(json.Unmarshal(b, &u))
 	return u
 }
 
@@ -80,8 +80,9 @@ func (PostQuery) FromRequest(r *http.Request) *PostQuery {
 		}
 	}
 	if sort != "" {
-		q.Sort = new(string)
-		*q.Sort = sort
+		q.Sort = sort
+	} else {
+		q.Sort = "flat"
 	}
 	return q
 }

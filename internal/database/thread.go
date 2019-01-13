@@ -48,8 +48,10 @@ func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 }
 
 func (m *DB) UpdateThread(slugOrID string, th *models.Thread) (err error) {
-	if _, err = m.GetThreadBySlugOrID(slugOrID); err != nil {
+	if o, err := m.GetThreadBySlugOrID(slugOrID); err != nil {
 		return NotFound(err)
+	} else {
+		th.ID = o.ID
 	}
 
 	tx := m.db.MustBegin()
@@ -110,8 +112,9 @@ func (m *DB) VoteThread(slugOrID string, vt *models.Vote) (*models.Thread, error
 	return m.GetThreadBySlugOrID(slugOrID)
 }
 
-func (m *DB) getThread(key string, value interface{}) (thr *models.Thread, err error) {
-	thr = &models.Thread{}
+func (m *DB) getThread(key string, value interface{}) (t *models.Thread, err error) {
+	t = &models.Thread{}
+	s := new(string)
 	if err := m.db.QueryRow(`
 		SELECT u.nickname, t.created, f.slug, t.tid, t.message, t.slug, t.title, t.votes
 		FROM threads t
@@ -119,10 +122,13 @@ func (m *DB) getThread(key string, value interface{}) (thr *models.Thread, err e
 		JOIN forums f ON t.forum=f.fid
 		WHERE t.`+key+`=$1
 	`, value).
-		Scan(&thr.Author, &thr.Created, &thr.Forum, &thr.ID, &thr.Message, &thr.Slug, &thr.Title, &thr.Votes); err != nil {
+		Scan(&t.Author, &t.Created, &t.Forum, &t.ID, &t.Message, &s, &t.Title, &t.Votes); err != nil {
 		return nil, err
 	}
-	return thr, nil
+	if s != nil {
+		t.Slug = *s
+	}
+	return t, nil
 }
 
 func (m *DB) GetThreadByID(tid int) (thr *models.Thread, err error) { return m.getThread("tid", tid) }
@@ -182,6 +188,7 @@ func (m *DB) GetThreads(q *models.ForumQuery) (res models.Threads, err error) {
 	}
 	defer rows.Close()
 
+	res = models.Threads{}
 	for rows.Next() {
 		tmp := &models.Thread{Forum: f.Slug}
 		if err := rows.Scan(&tmp.Author, &tmp.Created, &tmp.ID, &tmp.Message, &tmp.Slug, &tmp.Title, &tmp.Votes); err != nil {
