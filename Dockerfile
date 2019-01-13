@@ -35,6 +35,6 @@ EXPOSE 5000
 
 COPY  . /tmp/go
 WORKDIR /tmp/go
-RUN go build -mod vendor ./cmd/
-CMD service postgresql start && cmd 
+RUN go build -mod vendor -o forum ./cmd/
+CMD service postgresql start && /tmp/go/forum
 # --scheme=http --port=5000 --host=0.0.0.0 

@@ -9,11 +9,10 @@ import (
 func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 	var (
 		slug    = &th.Slug
-		o, err0 = m.GetThreadBySlug(th.Slug)
 		u, err1 = m.GetUserByName(th.Author)
 		f, err2 = m.GetForumBySlug(forum)
 	)
-	if err0 == nil {
+	if o, err := m.GetThreadBySlug(th.Slug); err == nil {
 		*th = *o
 		return AlreadyExist(nil)
 	}
