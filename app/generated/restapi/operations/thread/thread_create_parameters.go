@@ -9,7 +9,7 @@ import (
 	"io"
 	"net/http"
 
-	models "github.com/bomkvilt/tech-db-app/app/generated/models"
+	models "AForum/app/generated/models"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"

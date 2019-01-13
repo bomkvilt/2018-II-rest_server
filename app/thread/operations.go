@@ -1,15 +1,27 @@
 package thread
 
 import (
-	"github.com/bomkvilt/tech-db-app/app/database"
-	"github.com/bomkvilt/tech-db-app/app/generated/models"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/thread"
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	"encoding/json"
+	"AForum/app/database"
+	"AForum/app/generated/models"
+	"AForum/app/generated/restapi/operations/thread"
+	"AForum/utiles/walhalla"
 	"github.com/go-openapi/runtime/middleware"
 )
 
 // walhalla:gen
 func ThreadCreate(params thread.ThreadCreateParams, ctx *walhalla.Context, model *database.DB) middleware.Responder {
+	a, _ := json.Marshal(params.Thread)
+	defer func() {
+		tmp := params.Thread.ID
+		params.Thread.ID = 0
+		b, _ := json.Marshal(params.Thread)
+		if string(a) != string(b) {
+			println(string(a), "--", string(b))
+		}
+		params.Thread.ID = tmp
+	}()
+
 	switch err := model.CreateNewThread(params.Slug, params.Thread); err.(type) {
 	case *database.ErrorNotFound:
 		return thread.NewThreadCreateNotFound().WithPayload(&models.Error{

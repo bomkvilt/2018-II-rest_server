@@ -1,9 +1,8 @@
 package database
 
 import (
-	"github.com/bomkvilt/tech-db-app/app/generated/models"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/thread"
-	"strings"
+	"AForum/app/generated/models"
+	"AForum/app/generated/restapi/operations/thread"
 	"strconv"
 )
 
@@ -12,8 +11,8 @@ type TID int32
 // CreateNewThread -
 func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 	var (
-		slug           = th.Slug
-		oth, err0      = m.GetThreadBySlug(slug)
+		slug           = &th.Slug
+		oth, err0      = m.GetThreadBySlug(th.Slug)
 		usr, uid, err1 = m.GetUserByName(th.Author)
 		frm, fid, err2 = m.GetForumBySlug(forum)
 	)
@@ -26,14 +25,12 @@ func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 			return NotFound(err)
 		}
 	}
-	if slug == "" {
-		slug = th.Title
-		slug = strings.Replace(slug, " ", "_", -1)
-		slug = strings.Replace(slug, "/", "_", -1)
+	if *slug == "" {
+		slug = nil
 	}
 	th.Author = usr.Nickname
 	th.Forum = frm.Slug
-
+	
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
 	if err := tx.QueryRow(`
@@ -41,14 +38,14 @@ func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 		VALUES ($1, $2, $3, $4, $5, $6, 0)
 		RETURNING tid
 	`, uid, th.Created, fid, th.Message, slug, th.Title).Scan(&th.ID); err != nil {
-		return err
+		return AlreadyExist(err)
 	}
 	if _, err := tx.Exec(`
 		UPDATE forums
 		SET threadCount=threadCount+1
 		WHERE fid=$1
 	`, fid); err != nil {
-		return err
+		return NotFound(err)
 	}
 	return tx.Commit()
 }
@@ -132,6 +129,9 @@ func (m *DB) getThread(key string, value interface{}) (thr *models.Thread, err e
 
 // GetThreadBySlug -
 func (m *DB) GetThreadBySlug(slug string) (thr *models.Thread, err error) {
+	if slug == "" {
+		return nil, NotFound(nil)
+	}
 	return m.getThread("slug", slug)
 }
 

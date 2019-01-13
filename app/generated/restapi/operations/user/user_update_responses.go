@@ -8,7 +8,7 @@ package user
 import (
 	"net/http"
 
-	models "github.com/bomkvilt/tech-db-app/app/generated/models"
+	models "AForum/app/generated/models"
 	"github.com/go-openapi/runtime"
 )
 

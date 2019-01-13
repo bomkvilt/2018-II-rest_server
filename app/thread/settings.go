@@ -1,8 +1,8 @@
 package thread
 
 import (
-	"github.com/bomkvilt/tech-db-app/app/database"
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	"AForum/app/database"
+	"AForum/utiles/walhalla"
 )
 
 // walhalla:pack {model:NewModel}

@@ -1,4 +1,4 @@
-module github.com/bomkvilt/tech-db-app
+module AForum
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
@@ -13,6 +13,8 @@ require (
 	github.com/go-openapi/swag v0.18.0
 	github.com/go-openapi/validate v0.18.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/gorilla/handlers v1.4.0
+	github.com/gorilla/mux v1.6.2
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kr/pretty v0.1.0 // indirect

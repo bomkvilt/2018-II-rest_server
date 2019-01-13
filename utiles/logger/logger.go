@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	"AForum/utiles/walhalla"
 	"github.com/sirupsen/logrus"
 )
 

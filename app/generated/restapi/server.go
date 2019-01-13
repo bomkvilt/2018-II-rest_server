@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations"
+	"AForum/app/generated/restapi/operations"
 	"github.com/go-openapi/runtime/flagext"
 	"github.com/go-openapi/swag"
 	flags "github.com/jessevdk/go-flags"

@@ -19,7 +19,7 @@ CREATE TABLE forums (
     owner   	BIGINT,
 
     title   	TEXT,
-    slug    	CITEXT UNIQUE,
+    slug    	CITEXT UNIQUE NULL,
 	postCount   BIGINT,
 	threadCount BIGINT,
     msgCount    BIGINT,

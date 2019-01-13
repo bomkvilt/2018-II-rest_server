@@ -2,19 +2,19 @@
 package restapi
 
 import (
-	code "github.com/bomkvilt/tech-db-app/app"
-	codeforum "github.com/bomkvilt/tech-db-app/app/forum"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/forum"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/post"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/service"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/thread"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/user"
-	codepost "github.com/bomkvilt/tech-db-app/app/post"
-	codeservice "github.com/bomkvilt/tech-db-app/app/service"
-	codethread "github.com/bomkvilt/tech-db-app/app/thread"
-	codeuser "github.com/bomkvilt/tech-db-app/app/user"
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	code "AForum/app"
+	codeforum "AForum/app/forum"
+	"AForum/app/generated/restapi/operations"
+	"AForum/app/generated/restapi/operations/forum"
+	"AForum/app/generated/restapi/operations/post"
+	"AForum/app/generated/restapi/operations/service"
+	"AForum/app/generated/restapi/operations/thread"
+	"AForum/app/generated/restapi/operations/user"
+	codepost "AForum/app/post"
+	codeservice "AForum/app/service"
+	codethread "AForum/app/thread"
+	codeuser "AForum/app/user"
+	"AForum/utiles/walhalla"
 
 	"crypto/tls"
 	"net/http"
@@ -39,22 +39,22 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	code.SetupContext(&ctx)
 
 	api.ForumForumCreateHandler = forum.ForumCreateHandlerFunc(handlerForumCreate(ctx))
-	api.ForumForumGetOneHandler = forum.ForumGetOneHandlerFunc(handlerForumGetOne(ctx))
-	api.ThreadForumGetThreadsHandler = thread.ForumGetThreadsHandlerFunc(handlerForumGetThreads(ctx))
-	api.ThreadThreadCreateHandler = thread.ThreadCreateHandlerFunc(handlerThreadCreate(ctx))
-	api.ForumForumGetUsersHandler = forum.ForumGetUsersHandlerFunc(handlerForumGetUsers(ctx))
-	api.ServiceStatusHandler = service.StatusHandlerFunc(handlerStatus(ctx))
-	api.PostThreadGetPostsHandler = post.ThreadGetPostsHandlerFunc(handlerThreadGetPosts(ctx))
+	api.ServiceClearHandler = service.ClearHandlerFunc(handlerClear(ctx))
 	api.PostPostGetOneHandler = post.PostGetOneHandlerFunc(handlerPostGetOne(ctx))
 	api.PostPostUpdateHandler = post.PostUpdateHandlerFunc(handlerPostUpdate(ctx))
-	api.ServiceClearHandler = service.ClearHandlerFunc(handlerClear(ctx))
 	api.PostPostsCreateHandler = post.PostsCreateHandlerFunc(handlerPostsCreate(ctx))
+	api.PostThreadGetPostsHandler = post.ThreadGetPostsHandlerFunc(handlerThreadGetPosts(ctx))
 	api.UserUserGetOneHandler = user.UserGetOneHandlerFunc(handlerUserGetOne(ctx))
 	api.UserUserUpdateHandler = user.UserUpdateHandlerFunc(handlerUserUpdate(ctx))
-	api.ThreadThreadGetOneHandler = thread.ThreadGetOneHandlerFunc(handlerThreadGetOne(ctx))
-	api.ThreadThreadUpdateHandler = thread.ThreadUpdateHandlerFunc(handlerThreadUpdate(ctx))
+	api.ForumForumGetOneHandler = forum.ForumGetOneHandlerFunc(handlerForumGetOne(ctx))
+	api.ThreadThreadCreateHandler = thread.ThreadCreateHandlerFunc(handlerThreadCreate(ctx))
 	api.ThreadThreadVoteHandler = thread.ThreadVoteHandlerFunc(handlerThreadVote(ctx))
 	api.UserUserCreateHandler = user.UserCreateHandlerFunc(handlerUserCreate(ctx))
+	api.ForumForumGetUsersHandler = forum.ForumGetUsersHandlerFunc(handlerForumGetUsers(ctx))
+	api.ThreadForumGetThreadsHandler = thread.ForumGetThreadsHandlerFunc(handlerForumGetThreads(ctx))
+	api.ServiceStatusHandler = service.StatusHandlerFunc(handlerStatus(ctx))
+	api.ThreadThreadGetOneHandler = thread.ThreadGetOneHandlerFunc(handlerThreadGetOne(ctx))
+	api.ThreadThreadUpdateHandler = thread.ThreadUpdateHandlerFunc(handlerThreadUpdate(ctx))
 
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares), ctx)
 }
@@ -129,76 +129,6 @@ func handlerForumGetUsers(ctx walhalla.Context) forum.ForumGetUsersHandlerFunc {
 	}
 
 	return func(param forum.ForumGetUsersParams) middleware.Responder {
-		*paramPtr = param
-		return next(param.HTTPRequest)
-	}
-}
-
-func handlerThreadCreate(ctx walhalla.Context) thread.ThreadCreateHandlerFunc {
-
-	paramPtr := new(thread.ThreadCreateParams)
-	next := func(*http.Request) middleware.Responder {
-		return codethread.ThreadCreate(*paramPtr, &ctx, codethread.NewModel(&ctx))
-
-	}
-
-	return func(param thread.ThreadCreateParams) middleware.Responder {
-		*paramPtr = param
-		return next(param.HTTPRequest)
-	}
-}
-
-func handlerThreadUpdate(ctx walhalla.Context) thread.ThreadUpdateHandlerFunc {
-
-	paramPtr := new(thread.ThreadUpdateParams)
-	next := func(*http.Request) middleware.Responder {
-		return codethread.ThreadUpdate(*paramPtr, &ctx, codethread.NewModel(&ctx))
-
-	}
-
-	return func(param thread.ThreadUpdateParams) middleware.Responder {
-		*paramPtr = param
-		return next(param.HTTPRequest)
-	}
-}
-
-func handlerThreadGetOne(ctx walhalla.Context) thread.ThreadGetOneHandlerFunc {
-
-	paramPtr := new(thread.ThreadGetOneParams)
-	next := func(*http.Request) middleware.Responder {
-		return codethread.ThreadGetOne(*paramPtr, &ctx, codethread.NewModel(&ctx))
-
-	}
-
-	return func(param thread.ThreadGetOneParams) middleware.Responder {
-		*paramPtr = param
-		return next(param.HTTPRequest)
-	}
-}
-
-func handlerForumGetThreads(ctx walhalla.Context) thread.ForumGetThreadsHandlerFunc {
-
-	paramPtr := new(thread.ForumGetThreadsParams)
-	next := func(*http.Request) middleware.Responder {
-		return codethread.ForumGetThreads(*paramPtr, &ctx, codethread.NewModel(&ctx))
-
-	}
-
-	return func(param thread.ForumGetThreadsParams) middleware.Responder {
-		*paramPtr = param
-		return next(param.HTTPRequest)
-	}
-}
-
-func handlerThreadVote(ctx walhalla.Context) thread.ThreadVoteHandlerFunc {
-
-	paramPtr := new(thread.ThreadVoteParams)
-	next := func(*http.Request) middleware.Responder {
-		return codethread.ThreadVote(*paramPtr, &ctx, codethread.NewModel(&ctx))
-
-	}
-
-	return func(param thread.ThreadVoteParams) middleware.Responder {
 		*paramPtr = param
 		return next(param.HTTPRequest)
 	}
@@ -325,6 +255,76 @@ func handlerUserUpdate(ctx walhalla.Context) user.UserUpdateHandlerFunc {
 	}
 
 	return func(param user.UserUpdateParams) middleware.Responder {
+		*paramPtr = param
+		return next(param.HTTPRequest)
+	}
+}
+
+func handlerThreadCreate(ctx walhalla.Context) thread.ThreadCreateHandlerFunc {
+
+	paramPtr := new(thread.ThreadCreateParams)
+	next := func(*http.Request) middleware.Responder {
+		return codethread.ThreadCreate(*paramPtr, &ctx, codethread.NewModel(&ctx))
+
+	}
+
+	return func(param thread.ThreadCreateParams) middleware.Responder {
+		*paramPtr = param
+		return next(param.HTTPRequest)
+	}
+}
+
+func handlerThreadUpdate(ctx walhalla.Context) thread.ThreadUpdateHandlerFunc {
+
+	paramPtr := new(thread.ThreadUpdateParams)
+	next := func(*http.Request) middleware.Responder {
+		return codethread.ThreadUpdate(*paramPtr, &ctx, codethread.NewModel(&ctx))
+
+	}
+
+	return func(param thread.ThreadUpdateParams) middleware.Responder {
+		*paramPtr = param
+		return next(param.HTTPRequest)
+	}
+}
+
+func handlerThreadGetOne(ctx walhalla.Context) thread.ThreadGetOneHandlerFunc {
+
+	paramPtr := new(thread.ThreadGetOneParams)
+	next := func(*http.Request) middleware.Responder {
+		return codethread.ThreadGetOne(*paramPtr, &ctx, codethread.NewModel(&ctx))
+
+	}
+
+	return func(param thread.ThreadGetOneParams) middleware.Responder {
+		*paramPtr = param
+		return next(param.HTTPRequest)
+	}
+}
+
+func handlerForumGetThreads(ctx walhalla.Context) thread.ForumGetThreadsHandlerFunc {
+
+	paramPtr := new(thread.ForumGetThreadsParams)
+	next := func(*http.Request) middleware.Responder {
+		return codethread.ForumGetThreads(*paramPtr, &ctx, codethread.NewModel(&ctx))
+
+	}
+
+	return func(param thread.ForumGetThreadsParams) middleware.Responder {
+		*paramPtr = param
+		return next(param.HTTPRequest)
+	}
+}
+
+func handlerThreadVote(ctx walhalla.Context) thread.ThreadVoteHandlerFunc {
+
+	paramPtr := new(thread.ThreadVoteParams)
+	next := func(*http.Request) middleware.Responder {
+		return codethread.ThreadVote(*paramPtr, &ctx, codethread.NewModel(&ctx))
+
+	}
+
+	return func(param thread.ThreadVoteParams) middleware.Responder {
 		*paramPtr = param
 		return next(param.HTTPRequest)
 	}

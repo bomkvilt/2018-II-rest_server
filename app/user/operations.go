@@ -1,10 +1,10 @@
 package user
 
 import (
-	"github.com/bomkvilt/tech-db-app/app/database"
-	"github.com/bomkvilt/tech-db-app/app/generated/models"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/user"
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	"AForum/app/database"
+	"AForum/app/generated/models"
+	"AForum/app/generated/restapi/operations/user"
+	"AForum/utiles/walhalla"
 	"github.com/go-openapi/runtime/middleware"
 )
 

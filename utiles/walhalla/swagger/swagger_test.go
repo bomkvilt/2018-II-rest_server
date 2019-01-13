@@ -79,7 +79,7 @@ func TestParceSwaggerYaml(t *testing.T) {
 	expected := ParsedData{
 		Info: Info{
 			Version: "2018-10-23",
-			Title:   "github.com/bomkvilt/tech-db-app Application",
+			Title:   "AForum Application",
 		},
 		Operations: []Operation{
 			{"SignupUser", "user", "UserSignupUserHandler", "SignupUserHandlerFunc", "SignupUserParms"},

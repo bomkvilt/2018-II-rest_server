@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations"
+	"AForum/app/generated/restapi"
+	"AForum/app/generated/restapi/operations"
 	loads "github.com/go-openapi/loads"
 	flags "github.com/jessevdk/go-flags"
 )

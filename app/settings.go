@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/bomkvilt/tech-db-app/app/middleware"
-	"github.com/bomkvilt/tech-db-app/utiles/logger"
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	"AForum/app/middleware"
+	"AForum/utiles/logger"
+	"AForum/utiles/walhalla"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"

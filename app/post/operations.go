@@ -2,10 +2,10 @@ package post
 
 import (
 	"time"
-	"github.com/bomkvilt/tech-db-app/app/database"
-	"github.com/bomkvilt/tech-db-app/app/generated/models"
-	"github.com/bomkvilt/tech-db-app/app/generated/restapi/operations/post"
-	"github.com/bomkvilt/tech-db-app/utiles/walhalla"
+	"AForum/app/database"
+	"AForum/app/generated/models"
+	"AForum/app/generated/restapi/operations/post"
+	"AForum/utiles/walhalla"
 	"github.com/go-openapi/runtime/middleware"
 )
 
