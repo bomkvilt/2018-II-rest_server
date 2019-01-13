@@ -85,30 +85,52 @@ func (m *DB) VoteThread(slugOrID string, vt *models.Vote) (*models.Thread, error
 
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
+
+	addVote := func(tid, value int) error {
+		_, err := tx.Exec(`
+			UPDATE threads
+			SET votes=votes+$2
+			WHERE tid=$1
+		`, th.ID, value)
+		return err
+	}
+
 	r, _ := tx.Exec(`
 		UPDATE votes
 		SET voice=$3
 		WHERE thread=$1 AND author=$2;
 	`, th.ID, u.ID, vt.Voice)
 	if num, _ := r.RowsAffected(); num != 1 {
+		// new vote
 		if _, err := tx.Exec(`
 			INSERT INTO votes(thread, author, voice)
 			VALUES ($1, $2, $3);
 		`, th.ID, u.ID, vt.Voice); err != nil {
 			return nil, err
 		}
-	}
-	if _, err := tx.Exec(`
-		UPDATE threads
-		SET votes=(SELECT SUM(voice) FROM votes WHERE thread=$1)
-		WHERE tid=$1
-	`, th.ID); err != nil {
-		return nil, err
+		if err := addVote(th.ID, vt.Voice); err != nil {
+			return nil, err
+		}
+	} else {
+		// vote update
+		vote := m.getVote(u.ID, th.ID)
+		if err := addVote(th.ID, vt.Voice-vote); err != nil {
+			return nil, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 	return m.GetThreadBySlugOrID(slugOrID)
+}
+
+func (m *DB) getVote(uid int64, tid int) (voice int) {
+	m.db.QueryRow(`
+		SELECT voice 
+		FROM votes 
+		WHERE thread=$1 AND author=$2;
+	`, tid, uid).Scan(&voice)
+	return voice
 }
 
 func (m *DB) getThread(key string, value interface{}) (t *models.Thread, err error) {
