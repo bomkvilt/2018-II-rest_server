@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -35,7 +34,7 @@ func (Forum) FromRequest(r *http.Request) *Forum {
 	check(err)
 
 	u := &Forum{}
-	check(json.Unmarshal(b, u))
+	check(u.UnmarshalJSON(b))
 	return u
 }
 

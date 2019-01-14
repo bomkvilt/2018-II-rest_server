@@ -2,44 +2,31 @@ package database
 
 import (
 	"AForum/internal/models"
-	"fmt"
 	"strconv"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // psql
+	"github.com/jackc/pgx"
 )
 
 type DB struct {
-	db *sqlx.DB
+	db *pgx.ConnPool
 }
 
 // ----------------| common
 
-type conInfo struct {
-	host     string
-	port     string
-	user     string
-	password string
-	dbName   string
-}
-
-func (ci conInfo) Marshal() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		ci.host, ci.port, ci.user, ci.password, ci.dbName)
-}
-
 func New() *DB {
-	conn, err := sqlx.Open("postgres", conInfo{
-		host:     "127.0.0.1",
-		port:     "5432",
-		user:     "docker",
-		password: "docker",
-		dbName:   "docker",
-	}.Marshal())
+	db, err := pgx.NewConnPool(pgx.ConnPoolConfig{
+		ConnConfig: pgx.ConnConfig{
+			Host:     "localhost",
+			Port:     5432,
+			User:     "docker",
+			Password: "docker",
+			Database: "docker",
+		},
+		MaxConnections: 50,
+	})
 	check(err)
-
 	return &DB{
-		db: conn,
+		db: db,
 	}
 }
 

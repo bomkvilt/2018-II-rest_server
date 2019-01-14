@@ -62,7 +62,7 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 	b, a := m.postQueryBuilder(ps, t.ID, created)
 
 	//
-	tx := m.db.MustBegin()
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 
 	rows, err := tx.Query(b.String(), a...)

@@ -12,7 +12,7 @@ func (m *DB) CreateNewForum(f *models.Forum) error {
 	}
 	f.Author = u.Nickname
 
-	tx := m.db.MustBegin()
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 	if err := tx.QueryRow(`
 		INSERT INTO forums(owner, title, slug, threadCount, postCount) 

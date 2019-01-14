@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 )
@@ -18,6 +17,6 @@ func (Vote) FromRequest(r *http.Request) *Vote {
 	check(err)
 
 	u := &Vote{}
-	check(json.Unmarshal(b, u))
+	check(u.UnmarshalJSON(b))
 	return u
 }

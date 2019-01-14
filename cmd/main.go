@@ -8,11 +8,12 @@ import (
 	"AForum/internal/router"
 
 	"github.com/gorilla/handlers"
-	// "github.com/pkg/profile"
+	"github.com/pkg/profile"
 )
 
 func main() {
-	// defer profile.Start(profile.CPUProfile, profile.ProfilePath("./pro")).Stop()
+	defer profile.Start(profile.CPUProfile, profile.ProfilePath("./pro")).Stop()
+	defer func() { println("----------------------------------------------") }()
 
 	var (
 		d = database.New()

@@ -24,7 +24,7 @@ func (m *DB) CreateNewThread(forum string, th *models.Thread) (err error) {
 	th.Author = u.Nickname
 	th.Forum = f.Slug
 
-	tx := m.db.MustBegin()
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 	if err := tx.QueryRow(`
 		INSERT INTO threads(author, created, forum, message, slug          , title , votes)
@@ -43,7 +43,7 @@ func (m *DB) UpdateThread(slugOrID string, th *models.Thread) (err error) {
 		th.ID = o.ID
 	}
 
-	tx := m.db.MustBegin()
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 	if _, err := tx.Exec(`
 		UPDATE threads
@@ -73,7 +73,7 @@ func (m *DB) VoteThread(slugOrID string, vt *models.Vote) (*models.Thread, error
 		}
 	}
 
-	tx := m.db.MustBegin()
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 	r, err := tx.Exec(`
 		UPDATE votes
@@ -83,7 +83,7 @@ func (m *DB) VoteThread(slugOrID string, vt *models.Vote) (*models.Thread, error
 	check(err)
 
 	// new vote
-	if num, _ := r.RowsAffected(); num == 0 {
+	if r.RowsAffected() == 0 {
 		if _, err := tx.Exec(`
 			INSERT INTO votes(thread, author, voice)
 			VALUES ($1, $2, $3);

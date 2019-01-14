@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -27,6 +26,6 @@ func (Thread) FromRequest(r *http.Request) *Thread {
 	check(err)
 
 	u := &Thread{}
-	check(json.Unmarshal(b, u))
+	check(u.UnmarshalJSON(b))
 	return u
 }

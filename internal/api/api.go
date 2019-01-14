@@ -35,9 +35,9 @@ func check(e error) {
 	}
 }
 
-func response(rw http.ResponseWriter, code int, payload interface{}) {
+func response(rw http.ResponseWriter, code int, payload json.Marshaler) {
 	if payload != nil {
-		b, err := json.Marshal(payload)
+		b, err := payload.MarshalJSON()
 		check(err)
 
 		rw.Header().Set("content-type", "application/json")

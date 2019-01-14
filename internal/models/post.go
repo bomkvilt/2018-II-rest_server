@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -48,7 +47,7 @@ func (Post) FromRequest(r *http.Request) *Post {
 	check(err)
 
 	u := &Post{}
-	check(json.Unmarshal(b, u))
+	check(u.UnmarshalJSON(b))
 	return u
 }
 
@@ -57,7 +56,7 @@ func (Posts) FromRequest(r *http.Request) Posts {
 	check(err)
 
 	u := Posts{}
-	check(json.Unmarshal(b, &u))
+	check(u.UnmarshalJSON(b))
 	return u
 }
 

@@ -7,11 +7,11 @@ import (
 )
 
 // InsertNewUser -
-func (db *DB) InsertNewUser(u *models.User) error {
-	tx := db.db.MustBegin()
+func (m *DB) InsertNewUser(u *models.User) error {
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 
-	if _, err := db.db.Exec(`
+	if _, err := m.db.Exec(`
 		INSERT INTO users(nickname, fullname, about, email)
 		VALUES ( $1, $2, $3, $4 );
 	`, u.Nickname, u.Fullname, u.About, u.Email); err != nil {
@@ -21,8 +21,8 @@ func (db *DB) InsertNewUser(u *models.User) error {
 }
 
 // GetAllCollisions -
-func (db *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
-	rows, err := db.db.Query(`
+func (m *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
+	rows, err := m.db.Query(`
 		SELECT nickname, fullname, about, email 
 		FROM users u
 		WHERE u.nickname=$1 OR u.email=$2;
@@ -43,8 +43,8 @@ func (db *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
 	return usrs, nil
 }
 
-func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err error) {
-	f, err := db.GetForumBySlug(params.Slug)
+func (m *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err error) {
+	f, err := m.GetForumBySlug(params.Slug)
 	if err != nil {
 		return nil, NotFound(err)
 	}
@@ -65,7 +65,7 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 				sign = "<"
 			}
 
-			u, err := db.GetUserByName(*params.Since)
+			u, err := m.GetUserByName(*params.Since)
 			if err != nil {
 				return usrs, nil
 			}
@@ -78,7 +78,7 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 		}
 	}
 
-	rows, err := db.db.Query(`
+	rows, err := m.db.Query(`
 		SELECT u.nickname, u.fullname, u.about, u.email
 		FROM       forum_users x
 		INNER JOIN users       u ON(u.uid=x.username)
@@ -104,9 +104,9 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 
 // ----------------| Get
 
-func (db *DB) getUser(field string, value interface{}) (u *models.User, err error) {
+func (m *DB) getUser(field string, value interface{}) (u *models.User, err error) {
 	u = &models.User{}
-	if err := db.db.QueryRow(`
+	if err := m.db.QueryRow(`
 		SELECT nickname, fullname, about, email, uid 
 		FROM users 
 		WHERE `+field+`=$1;
@@ -115,13 +115,13 @@ func (db *DB) getUser(field string, value interface{}) (u *models.User, err erro
 	}
 	return u, nil
 }
-func (db *DB) GetUserByName(nick string) (*models.User, error)   { return db.getUser("nickname", nick) }
-func (db *DB) GetUserByEmail(email string) (*models.User, error) { return db.getUser("email", email) }
-func (db *DB) GetUserByID(uid int64) (*models.User, error)       { return db.getUser("uid", uid) }
+func (m *DB) GetUserByName(nick string) (*models.User, error)   { return m.getUser("nickname", nick) }
+func (m *DB) GetUserByEmail(email string) (*models.User, error) { return m.getUser("email", email) }
+func (m *DB) GetUserByID(uid int64) (*models.User, error)       { return m.getUser("uid", uid) }
 
-func (db *DB) CheckUserByName(nick string) bool {
+func (m *DB) CheckUserByName(nick string) bool {
 	dm := 0
-	if err := db.db.QueryRow(`
+	if err := m.db.QueryRow(`
 		SELECT uid 
 		FROM users 
 		WHERE nickname=$1;`, nick).
@@ -131,7 +131,7 @@ func (db *DB) CheckUserByName(nick string) bool {
 	return true
 }
 
-func (db *DB) CheckUsersByName(nicks map[string]bool) (map[string]int64, bool) {
+func (m *DB) CheckUsersByName(nicks map[string]bool) (map[string]int64, bool) {
 	if len(nicks) == 0 {
 		return nil, true
 	}
@@ -140,7 +140,7 @@ func (db *DB) CheckUsersByName(nicks map[string]bool) (map[string]int64, bool) {
 	for n := range nicks {
 		arr = append(arr, n)
 	}
-	rows, err := db.db.Query(`
+	rows, err := m.db.Query(`
 		SELECT uid
 		FROM users 
 		WHERE nickname = ANY (ARRAY['` + strings.Join(arr, "', '") + `'])
@@ -163,8 +163,8 @@ func (db *DB) CheckUsersByName(nicks map[string]bool) (map[string]int64, bool) {
 // ----------------|
 
 // UpdateUser -
-func (db *DB) UpdateUser(u *models.User) error {
-	tx := db.db.MustBegin()
+func (m *DB) UpdateUser(u *models.User) error {
+	tx, _ := m.db.Begin()
 	defer tx.Rollback()
 
 	_, err := tx.Exec(`
