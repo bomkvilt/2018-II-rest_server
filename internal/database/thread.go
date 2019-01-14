@@ -148,7 +148,7 @@ func (m *DB) GetThreads(q *models.ForumQuery) (res models.Threads, err error) {
 	if q.Desc != nil && *q.Desc {
 		order = "DESC"
 	}
-	if q.Since != nil {
+	if q.Since != "" {
 		sign := ">="
 		if order == "DESC" {
 			sign = "<="

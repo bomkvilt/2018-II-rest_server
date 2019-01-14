@@ -37,7 +37,7 @@ type PostFull struct {
 type PostQuery struct {
 	Desc     *bool
 	Limit    *int
-	Since    *int64
+	Since    int64
 	SlugOrID string
 	Sort     string
 }
@@ -74,8 +74,7 @@ func (PostQuery) FromRequest(r *http.Request) *PostQuery {
 		*q.Limit, _ = strconv.Atoi(limit)
 	}
 	if since != "" {
-		q.Since = new(int64)
-		*q.Since, _ = strconv.ParseInt(since, 10, 64)
+		q.Since, _ = strconv.ParseInt(since, 10, 64)
 	}
 	if desc != "" {
 		q.Desc = new(bool)

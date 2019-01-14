@@ -757,15 +757,7 @@ func easyjsonD2b7633eDecodeAForumInternalModels7(in *jlexer.Lexer, out *PostQuer
 				*out.Limit = int(in.Int())
 			}
 		case "Since":
-			if in.IsNull() {
-				in.Skip()
-				out.Since = nil
-			} else {
-				if out.Since == nil {
-					out.Since = new(int64)
-				}
-				*out.Since = int64(in.Int64())
-			}
+			out.Since = int64(in.Int64())
 		case "SlugOrID":
 			out.SlugOrID = string(in.String())
 		case "Sort":
@@ -820,11 +812,7 @@ func easyjsonD2b7633eEncodeAForumInternalModels7(out *jwriter.Writer, in PostQue
 		} else {
 			out.RawString(prefix)
 		}
-		if in.Since == nil {
-			out.RawString("null")
-		} else {
-			out.Int64(int64(*in.Since))
-		}
+		out.Int64(int64(in.Since))
 	}
 	{
 		const prefix string = ",\"SlugOrID\":"
@@ -1286,15 +1274,7 @@ func easyjsonD2b7633eDecodeAForumInternalModels11(in *jlexer.Lexer, out *ForumQu
 				*out.Limit = int(in.Int())
 			}
 		case "Since":
-			if in.IsNull() {
-				in.Skip()
-				out.Since = nil
-			} else {
-				if out.Since == nil {
-					out.Since = new(string)
-				}
-				*out.Since = string(in.String())
-			}
+			out.Since = string(in.String())
 		case "Slug":
 			out.Slug = string(in.String())
 		default:
@@ -1347,11 +1327,7 @@ func easyjsonD2b7633eEncodeAForumInternalModels11(out *jwriter.Writer, in ForumQ
 		} else {
 			out.RawString(prefix)
 		}
-		if in.Since == nil {
-			out.RawString("null")
-		} else {
-			out.String(string(*in.Since))
-		}
+		out.String(string(in.Since))
 	}
 	{
 		const prefix string = ",\"Slug\":"

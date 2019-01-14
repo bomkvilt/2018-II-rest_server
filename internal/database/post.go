@@ -141,67 +141,77 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 		return nil, NotFound(err)
 	}
 
-	var (
-		sign  = ">"
-		order = "ASC"
-		vars  = make([]interface{}, 1)
-		parts = map[string]string{}
-	)
-	if params.Desc != nil && *params.Desc {
-		order = "DESC"
-		sign = "<"
-	}
-	vars[0] = &th.ID
-
+	q := strings.Builder{}
 	switch params.Sort {
 	case "flat":
-		if params.Since != nil {
-			parts["since"] = "AND pid" + sign + "$" + strconv.Itoa(len(vars)+1)
-			vars = append(vars, params.Since)
+		q.WriteString(`
+			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
+			FROM posts
+			WHERE thread = $1`)
+		if params.Since != 0 {
+			if params.Desc != nil && *params.Desc {
+				q.WriteString(" AND pid < $2")
+			} else {
+				q.WriteString(" AND pid > $2")
+			}
+		} else {
+			q.WriteString(" AND $2 = 0")
 		}
-		if params.Limit != nil {
-			parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
-			vars = append(vars, params.Limit)
+		if params.Desc != nil && *params.Desc {
+			q.WriteString(" ORDER BY pid DESC")
+		} else {
+			q.WriteString(" ORDER BY pid ASC")
 		}
-		parts["tail"] = `
-			WHERE thread=$1 ` + parts["since"] + `
-			ORDER BY pid    ` + order + `
-			` + parts["limit"]
+		q.WriteString(" LIMIT $3")
 	case "tree":
-		if params.Since != nil {
-			parts["since"] = "AND (path" + sign + "(SELECT path FROM posts WHERE pid=$" + strconv.Itoa(len(vars)+1) + "))"
-			vars = append(vars, params.Since)
+		q.WriteString(`
+			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
+			FROM posts
+			WHERE thread = $1`)
+		if params.Since != 0 {
+			if params.Desc != nil && *params.Desc {
+				q.WriteString(" AND path < (SELECT path FROM posts WHERE pid = $2)")
+			} else {
+				q.WriteString(" AND path > (SELECT path FROM posts WHERE pid = $2)")
+			}
+		} else {
+			q.WriteString(" AND $2 = 0")
 		}
-		if params.Limit != nil {
-			parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
-			vars = append(vars, params.Limit)
+		if params.Desc != nil && *params.Desc {
+			q.WriteString(" ORDER BY path DESC")
+		} else {
+			q.WriteString(" ORDER BY path ASC")
 		}
-		parts["tail"] = `
-			WHERE thread=$1 ` + parts["since"] + `
-			ORDER BY path   ` + order + `
-			` + parts["limit"]
+		q.WriteString(" LIMIT $3")
 	case "parent_tree":
-		if params.Since != nil {
-			parts["since"] = "AND (pid" + sign + "(SELECT path[1] FROM posts WHERE pid = $" + strconv.Itoa(len(vars)+1) + "))"
-			vars = append(vars, params.Since)
-		}
-		if params.Limit != nil {
-			parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
-			vars = append(vars, params.Limit)
-		}
-		parts["tail"] = `
+		q.WriteString(`
+			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
+			FROM posts
 			WHERE path[1] IN (
 				SELECT pid FROM posts
-				WHERE thread=$1 AND parent=0 ` + parts["since"] + `
-				ORDER BY path[1] ` + order + `
-				` + parts["limit"] + `
-			) ORDER BY path[1] ` + order + `, path ASC`
+				WHERE thread=$1 AND parent=0`)
+		if params.Since != 0 {
+			if params.Desc != nil && *params.Desc {
+				q.WriteString(" AND pid < (SELECT path[1] FROM posts WHERE pid = $2)")
+			} else {
+				q.WriteString(" AND pid > (SELECT path[1] FROM posts WHERE pid = $2)")
+			}
+		} else {
+			q.WriteString(" AND $2 = 0")
+		}
+		if params.Desc != nil && *params.Desc {
+			q.WriteString(" ORDER BY pid DESC")
+		} else {
+			q.WriteString(" ORDER BY pid ASC")
+		}
+		q.WriteString(" LIMIT $3)")
+		if params.Desc != nil && *params.Desc {
+			q.WriteString(" ORDER BY path[1] DESC, path")
+		} else {
+			q.WriteString(" ORDER BY path[1] ASC, path")
+		}
 	}
-	rows, err := m.db.Query(`
-		SELECT author, created, forum, pid, isEdited, message, parent, thread, path
-		FROM posts
-		`+parts["tail"]+`
-	`, vars...)
+	rows, err := m.db.Query(q.String(), th.ID, params.Since, params.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -209,12 +219,8 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 
 	res = models.Posts{}
 	for rows.Next() {
-		t := &models.Post{
-			Thread: th.ID,
-		}
-		if err := rows.Scan(&t.Author, &t.Created, &t.Forum, &t.ID, &t.IsEdited, &t.Message, &t.Parent, &t.Thread, pq.Array(&t.Path)); err != nil {
-			return nil, err
-		}
+		t := &models.Post{Thread: th.ID}
+		rows.Scan(&t.Author, &t.Created, &t.Forum, &t.ID, &t.IsEdited, &t.Message, &t.Parent, &t.Thread, pq.Array(&t.Path))
 		res = append(res, t)
 	}
 	return res, nil

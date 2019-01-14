@@ -41,3 +41,8 @@ func (m *DB) getForum(field string, value interface{}) (f *models.Forum, err err
 }
 func (m *DB) GetForumBySlug(slug string) (*models.Forum, error) { return m.getForum("slug", slug) }
 func (m *DB) GetForumByID(fid int64) (*models.Forum, error)     { return m.getForum("fid", fid) }
+
+func (m *DB) CheckForum(slug string) bool {
+	var tester int
+	return m.db.QueryRow("SELECT fid FROM forums WHERE slug=$1", slug).Scan(&tester) == nil
+}

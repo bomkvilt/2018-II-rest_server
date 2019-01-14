@@ -25,7 +25,7 @@ type Forums []*Forum
 type ForumQuery struct {
 	Desc  *bool
 	Limit *int
-	Since *string
+	Since string
 	Slug  string
 }
 
@@ -56,9 +56,6 @@ func (ForumQuery) FromRequest(r *http.Request) *ForumQuery {
 			*q.Desc = true
 		}
 	}
-	if since != "" {
-		q.Since = new(string)
-		*q.Since = since
-	}
+	q.Since = since
 	return q
 }

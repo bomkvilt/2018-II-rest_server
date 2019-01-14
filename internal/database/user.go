@@ -2,7 +2,7 @@ package database
 
 import (
 	"AForum/internal/models"
-	"strconv"
+	"errors"
 	"strings"
 )
 
@@ -44,49 +44,39 @@ func (m *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
 }
 
 func (m *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err error) {
-	f, err := m.GetForumBySlug(params.Slug)
-	if err != nil {
-		return nil, NotFound(err)
+	if !m.CheckForum(params.Slug) {
+		return nil, NotFound(errors.New("No forum"))
 	}
 
-	var (
-		order = "ASC"
-		vars  = make([]interface{}, 1, 3)
-		parts = make(map[string]string)
-	)
-	{ // set flags
-		vars[0] = &f.ID
-		if params.Desc != nil && *params.Desc {
-			order = "DESC"
-		}
-		if params.Since != nil {
-			sign := ">"
-			if order == "DESC" {
-				sign = "<"
-			}
-
-			u, err := m.GetUserByName(*params.Since)
-			if err != nil {
-				return usrs, nil
-			}
-			parts["since"] = "AND u.nickname" + sign + "$" + strconv.Itoa(len(vars)+1)
-			vars = append(vars, u.Nickname)
-		}
-		if params.Limit != nil {
-			parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
-			vars = append(vars, params.Limit)
-		}
-	}
-
-	rows, err := m.db.Query(`
+	q := strings.Builder{}
+	q.WriteString(`
 		SELECT u.nickname, u.fullname, u.about, u.email
 		FROM       forum_users x
 		INNER JOIN users       u ON(u.uid=x.username)
-		WHERE x.forum=$1    `+parts["since"]+`
-		ORDER BY u.nickname `+order+`
-		`+parts["limit"]+`
-	`, vars...)
+		INNER JOIN forums      f ON(f.fid=x.forum)
+		WHERE f.slug=$1`)
+	if params.Since != "" {
+		if params.Desc != nil && *params.Desc {
+			q.WriteString(" AND u.nickname < $2")
+		} else {
+			q.WriteString(" AND u.nickname > $2")
+		}
+	} else {
+		q.WriteString(" AND $2=''")
+	}
+	if params.Desc != nil && *params.Desc {
+		q.WriteString(" ORDER BY u.nickname DESC")
+	} else {
+		q.WriteString(" ORDER BY u.nickname ASC")
+	}
+	if params.Limit != nil {
+		q.WriteString(" LIMIT $3")
+	} else {
+		q.WriteString(" LIMIT 99999999+$3")
+	}
+	rows, err := m.db.Query(q.String(), params.Slug, params.Since, params.Limit)
 	if err != nil {
+		println(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -94,9 +84,7 @@ func (m *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err er
 	usrs = models.Users{}
 	for rows.Next() {
 		t := &models.User{}
-		if err := rows.Scan(&t.Nickname, &t.Fullname, &t.About, &t.Email); err != nil {
-			return nil, err
-		}
+		rows.Scan(&t.Nickname, &t.Fullname, &t.About, &t.Email)
 		usrs = append(usrs, t)
 	}
 	return usrs, nil
