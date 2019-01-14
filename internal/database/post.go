@@ -45,7 +45,8 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 		}
 		parents[pid] = pr
 	}
-	if !m.CheckUsersByName(authorsSet) {
+	uids, ok := m.CheckUsersByName(authorsSet)
+	if !ok {
 		return NotFound(errors.New("Can't find post author"))
 	}
 
@@ -64,7 +65,7 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
 
-	rows, err := m.db.Query(b.String(), a...)
+	rows, err := tx.Query(b.String(), a...)
 	if err != nil {
 		return Conflict(err)
 	}
@@ -76,6 +77,21 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 			return Conflict(err)
 		}
 	}
+	rows.Close()
+
+	if _, err := tx.Exec(`
+		UPDATE forums 
+		SET postCount=postCount+$2
+		WHERE fid=$1
+	`, f.ID, len(ps)); err != nil {
+		return Conflict(err)
+	}
+
+	c, d := m.postForumUsersQueryBuilder(ps, f.ID, uids)
+	if _, err := tx.Exec(c.String(), d...); err != nil {
+		return Conflict(err)
+	}
+
 	return tx.Commit()
 }
 
@@ -94,7 +110,26 @@ func (m *DB) postQueryBuilder(ps models.Posts, tid int, created string) (*string
 			c+1, c+2, c+3, c+4, c+5, c+6, c+7))
 		a = append(a, p.Author, tid, p.Message, p.Parent, created, pq.Array(p.Path), p.Forum)
 	}
-	b.WriteString("RETURNING created, pid")
+	b.WriteString(" RETURNING created, pid")
+
+	return b, a
+}
+
+func (m *DB) postForumUsersQueryBuilder(ps models.Posts, fid int, uids map[string]int64) (*strings.Builder, []interface{}) {
+	b := &strings.Builder{}
+	a := []interface{}{}
+
+	b.WriteString("INSERT INTO forum_users (forum, username) VALUES ")
+	for i, p := range ps {
+		if i != 0 {
+			b.WriteString(", ")
+		}
+
+		c := 2 * i
+		b.WriteString(fmt.Sprintf("($%d, $%d)", c+1, c+2))
+		a = append(a, fid, uids[p.Author])
+	}
+	b.WriteString(" ON conflict do nothing")
 
 	return b, a
 }

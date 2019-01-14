@@ -12,7 +12,7 @@ CREATE TABLE users (
     PRIMARY KEY(uid)
 );
 
-CREATE UNIQUE INDEX users_main ON users (nickname);
+CREATE INDEX users_main ON users USING hash (nickname);
 
 -----------------------------| forum |-----------------------------
 
@@ -28,7 +28,7 @@ CREATE TABLE forums (
     FOREIGN KEY(owner) REFERENCES users(uid)
 );
 
--- CREATE UNIQUE INDEX forums_slug ON forums (fid );
+CREATE INDEX forums_slug ON forums USING hash (fid );
 -- CREATE UNIQUE INDEX forums_id   ON forums (slug);
 
 
@@ -41,8 +41,8 @@ CREATE TABLE forum_users (      -- A/
     UNIQUE(username, forum)
 );
 
--- CREATE INDEX forum_users_username ON forum_users (username);
--- CREATE INDEX forum_users_forum    ON forum_users (forum   );
+CREATE INDEX forum_users_username ON forum_users USING hash (username);
+CREATE INDEX forum_users_forum    ON forum_users (forum   );
 
 -----------------------------| thread |-----------------------------
 
@@ -59,8 +59,10 @@ CREATE TABLE threads (
     PRIMARY KEY(tid)
 );
 
-CREATE UNIQUE INDEX threads_slug ON threads (tid );
-CREATE UNIQUE INDEX threads_id   ON threads (slug);
+CREATE INDEX threads_id           ON threads USING hash (tid);
+CREATE INDEX threads_slug         ON threads USING hash (slug);
+CREATE INDEX thread_created       ON threads (created);
+CREATE INDEX thread_forum_created ON threads (forum, created);
 
 
 DROP TABLE IF EXISTS votes CASCADE;
@@ -131,21 +133,13 @@ CREATE TABLE posts (
     -- FOREIGN KEY(thread) REFERENCES threads(tid)
 );
 
-CREATE INDEX posts_main ON posts USING hash (pid);
+CREATE INDEX posts_main   ON posts USING hash (pid);
+CREATE INDEX posts_path   ON posts (path);
+CREATE INDEX posts_thread ON posts (thread);
+CREATE INDEX posts_sort   ON posts (path, created);
 
 ----
-CREATE OR REPLACE FUNCTION on_post() RETURNS TRIGGER AS $BODY$ BEGIN 
-    -- add the thread's user into a forum user list
-    INSERT INTO forum_users (forum, username) 
-        VALUES (
-            (SELECT fid FROM forums WHERE slug=new.forum), 
-            (SELECT uid FROM users WHERE nickname=new.author)
-        ) 
-        ON conflict do nothing;
-    -- increase post count
-    UPDATE forums 
-		SET postCount=postCount+1
-		WHERE slug=new.forum;
+CREATE OR REPLACE FUNCTION on_post() RETURNS TRIGGER AS $BODY$ BEGIN
     -- fix path
     new.path = new.path || new.pid;
     RETURN new;

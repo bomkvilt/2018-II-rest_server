@@ -131,23 +131,33 @@ func (db *DB) CheckUserByName(nick string) bool {
 	return true
 }
 
-func (db *DB) CheckUsersByName(nicks map[string]bool) bool {
+func (db *DB) CheckUsersByName(nicks map[string]bool) (map[string]int64, bool) {
 	if len(nicks) == 0 {
-		return true
+		return nil, true
 	}
 
 	arr := make([]string, 0, len(nicks))
 	for n := range nicks {
-		arr = append(arr, `'`+n+`'`)
+		arr = append(arr, n)
 	}
-	res, err := db.db.Exec(`
+	rows, err := db.db.Query(`
 		SELECT uid
 		FROM users 
-		WHERE nickname = ANY (ARRAY[` + strings.Join(arr, ", ") + `])
+		WHERE nickname = ANY (ARRAY['` + strings.Join(arr, "', '") + `'])
 	`)
 	check(err)
-	rws, _ := res.RowsAffected()
-	return rws == int64(len(arr))
+	defer rows.Close()
+
+	r := map[string]int64{}
+	for _, n := range arr {
+		if !rows.Next() {
+			return nil, false
+		}
+		var t int64
+		check(rows.Scan(&t))
+		r[n] = t
+	}
+	return r, true
 }
 
 // ----------------|
