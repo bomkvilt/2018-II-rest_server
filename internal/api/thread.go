@@ -16,8 +16,10 @@ func (h *Handler) ThreadCreate(rw http.ResponseWriter, r *http.Request) {
 	)
 	switch err := h.db.CreateNewThread(slug, th); err.(type) {
 	case *database.ErrorNotFound:
+		println(err.Error(), "ThreadCreate")
 		response(rw, 404, models.Error{Message: err.Error()})
 	case *database.ErrorAlreadyExist:
+		println(err.Error(), "ThreadCreate")
 		response(rw, 409, th)
 	default:
 		response(rw, 201, th)
@@ -30,6 +32,7 @@ func (h *Handler) ThreadUpdate(rw http.ResponseWriter, r *http.Request) {
 		sod = mux.Vars(r)["slug_or_id"]
 	)
 	if err := h.db.UpdateThread(sod, th); err != nil {
+		println(err.Error(), "ThreadUpdate")
 		response(rw, 404, models.Error{Message: err.Error()})
 	} else {
 		response(rw, 200, th)
@@ -39,6 +42,7 @@ func (h *Handler) ThreadUpdate(rw http.ResponseWriter, r *http.Request) {
 func (h *Handler) ThreadGetOne(rw http.ResponseWriter, r *http.Request) {
 	th, err := h.db.GetThreadBySlugOrID(mux.Vars(r)["slug_or_id"])
 	if err != nil {
+		println(err.Error(), "ThreadGetOne")
 		response(rw, 404, models.Error{Message: err.Error()})
 	} else {
 		response(rw, 200, th)
@@ -48,6 +52,7 @@ func (h *Handler) ThreadGetOne(rw http.ResponseWriter, r *http.Request) {
 func (h *Handler) ForumGetThreads(rw http.ResponseWriter, r *http.Request) {
 	q := models.ForumQuery{}.FromRequest(r)
 	if ths, err := h.db.GetThreads(q); err != nil {
+		println(err.Error(), "ForumGetThreads")
 		response(rw, 404, models.Error{Message: err.Error()})
 	} else {
 		response(rw, 200, ths)
@@ -60,6 +65,7 @@ func (h *Handler) ThreadVote(rw http.ResponseWriter, r *http.Request) {
 		sod = mux.Vars(r)["slug_or_id"]
 	)
 	if th, err := h.db.VoteThread(sod, vt); err != nil {
+		println(err.Error(), "ThreadVote")
 		response(rw, 404, models.Error{Message: err.Error()})
 	} else {
 		response(rw, 200, th)
