@@ -1,47 +1,48 @@
 package router
 
 import (
-	"net/http"
-
 	"AForum/internal/api"
-	"github.com/gorilla/mux"
+	"github.com/buaazp/fasthttprouter"
+	"github.com/valyala/fasthttp"
 )
 
 type Router struct {
-	mux.Router
+	fasthttprouter.Router
 }
 
-func New(h *api.Handler) *Router {
+func New(h *api.Handler) fasthttp.RequestHandler {
 	r := &Router{
-		Router: *mux.NewRouter(),
+		Router: *fasthttprouter.New(),
 	}
-	r.Get(`/api/user/{nick}/profile`, h.UserGetOne)
-	r.Post(`/api/user/{nick}/create`, h.UserCreate)
-	r.Post(`/api/user/{nick}/profile`, h.UserUpdate)
+	r.GET(`/api/user/:nick/profile`, h.UserGetOne)
+	r.POST(`/api/user/:nick/create`, h.UserCreate)
+	r.POST(`/api/user/:nick/profile`, h.UserUpdate)
 
-	r.Post(`/api/forum/create`, h.ForumCreate)
-	r.Get(`/api/forum/{slug}/users`, h.ForumGetUsers)
-	r.Get(`/api/forum/{slug}/details`, h.ForumGetOne)
-	r.Get(`/api/forum/{slug}/threads`, h.ForumGetThreads)
-	r.Post(`/api/forum/{slug}/create`, h.ThreadCreate)
+	// r.POST(`/api/forum/create`, h.ForumCreate)
+	r.GET(`/api/forum/:slug/users`, h.ForumGetUsers)
+	r.GET(`/api/forum/:slug/details`, h.ForumGetOne)
+	r.GET(`/api/forum/:slug/threads`, h.ForumGetThreads)
+	r.POST(`/api/forum/:slug/create`, h.ThreadCreate)
 
-	r.Post(`/api/thread/{slug_or_id}/create`, h.PostsCreate)
-	r.Post(`/api/thread/{slug_or_id}/vote`, h.ThreadVote)
-	r.Get(`/api/thread/{slug_or_id}/details`, h.ThreadGetOne)
-	r.Post(`/api/thread/{slug_or_id}/details`, h.ThreadUpdate)
+	r.POST(`/api/thread/:slug_or_id/create`, h.PostsCreate)
+	r.POST(`/api/thread/:slug_or_id/vote`, h.ThreadVote)
+	r.GET(`/api/thread/:slug_or_id/details`, h.ThreadGetOne)
+	r.POST(`/api/thread/:slug_or_id/details`, h.ThreadUpdate)
 
-	r.Get(`/api/thread/{slug_or_id}/posts`, h.ThreadGetPosts)
+	r.GET(`/api/thread/:slug_or_id/posts`, h.ThreadGetPosts)
 
-	r.Get(`/api/post/{id}/details`, h.PostGetOne)
-	r.Post(`/api/post/{id}/details`, h.PostUpdate)
+	r.GET(`/api/post/:id/details`, h.PostGetOne)
+	r.POST(`/api/post/:id/details`, h.PostUpdate)
 
-	r.Get(`/api/service/status`, h.Status)
-	r.Post(`/api/service/clear`, h.Clear)
+	r.GET(`/api/service/status`, h.Status)
+	r.POST(`/api/service/clear`, h.Clear)
 
-	return r
+	return func(ctx *fasthttp.RequestCtx) {
+		path := string(ctx.Path())
+		if path == "/api/forum/create" {
+			h.ForumCreate(ctx)
+			return
+		}
+		r.Handler(ctx)
+	}
 }
-
-// ----------------||
-
-func (r *Router) Get(uri string, h http.HandlerFunc)  { r.HandleFunc(uri, h).Methods("GET") }
-func (r *Router) Post(uri string, h http.HandlerFunc) { r.HandleFunc(uri, h).Methods("POST") }

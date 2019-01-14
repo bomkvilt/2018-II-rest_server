@@ -1,26 +1,24 @@
 package api
 
 import (
-	"net/http"
+	"github.com/valyala/fasthttp"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	"AForum/internal/database"
 	"AForum/internal/models"
 )
 
-func (h *Handler) PostsCreate(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostsCreate(ctx *fasthttp.RequestCtx) {
 	var (
-		sod = mux.Vars(r)["slug_or_id"]
-		pss = models.Posts{}.FromRequest(r)
+		sod = ctx.UserValue("slug_or_id").(string)
+		pss = models.Posts{}.FromRequest(ctx)
 	)
 
 	if _, err := h.db.GetThreadBySlugOrID(sod); err != nil {
 		// println(err.Error(), "PostsCreate")
-		response(rw, 404, models.Error{Message: "Can't find post thread by id: " + sod})
+		response(ctx, 404, models.Error{Message: "Can't find post thread by id: " + sod})
 		return
 	}
 	created := time.Now().Format("2006-01-02T15:04:05.999999999Z07:00")
@@ -28,46 +26,51 @@ func (h *Handler) PostsCreate(rw http.ResponseWriter, r *http.Request) {
 	switch err := h.db.CreateNewPosts(sod, created, pss); err.(type) {
 	case *database.ErrorConflict:
 		// println(err.Error(), "PostsCreate")
-		response(rw, 409, models.Error{Message: err.Error()})
+		response(ctx, 409, models.Error{Message: err.Error()})
 	case *database.ErrorNotFound:
 		// println(err.Error(), "PostsCreate")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	default:
-		response(rw, 201, pss)
+		response(ctx, 201, pss)
 	}
 }
 
-func (h *Handler) ThreadGetPosts(rw http.ResponseWriter, r *http.Request) {
-	q := models.PostQuery{}.FromRequest(r)
+func (h *Handler) ThreadGetPosts(ctx *fasthttp.RequestCtx) {
+	q := models.PostQuery{}.FromRequest(ctx)
 	if pss, err := h.db.GetPosts(q); err != nil {
 		// println(err.Error(), "ThreadGetPosts")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, pss)
+		response(ctx, 200, pss)
 	}
 }
 
-func (h *Handler) PostGetOne(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostGetOne(ctx *fasthttp.RequestCtx) {
 	var (
-		id, _   = strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-		related = strings.Split(r.URL.Query().Get("related"), ",")
+		rawID   = ctx.UserValue("id").(string)
+		rawRel  = ctx.QueryArgs().Peek("related")
+		related = strings.Split(string(rawRel), ",")
+		id, _   = strconv.ParseInt(rawID, 10, 64)
 	)
 	if res, err := h.db.GetPost(id, related); err != nil {
 		// println(err.Error(), "PostGetOne")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, res)
+		response(ctx, 200, res)
 	}
 }
 
-func (h *Handler) PostUpdate(rw http.ResponseWriter, r *http.Request) {
-	p := models.Post{}.FromRequest(r)
-	p.ID, _ = strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+func (h *Handler) PostUpdate(ctx *fasthttp.RequestCtx) {
+	var (
+		p = models.Post{}.FromRequest(ctx)
+		rawID   = ctx.UserValue("id").(string)
+	)
+	p.ID, _ = strconv.ParseInt(rawID, 10, 64)
 
 	if err := h.db.UpdatePost(p); err != nil {
 		// println(err.Error(), "PostUpdate")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, p)
+		response(ctx, 200, p)
 	}
 }

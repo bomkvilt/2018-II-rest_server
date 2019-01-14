@@ -1,12 +1,10 @@
 package models
 
 import (
-	"io/ioutil"
-	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/valyala/fasthttp"
 )
 
 // easyjson:json
@@ -42,50 +40,39 @@ type PostQuery struct {
 	Sort     string
 }
 
-func (Post) FromRequest(r *http.Request) *Post {
-	b, err := ioutil.ReadAll(r.Body)
-	check(err)
-
+func (Post) FromRequest(ctx *fasthttp.RequestCtx) *Post {
 	u := &Post{}
-	check(u.UnmarshalJSON(b))
+	check(u.UnmarshalJSON(ctx.PostBody()))
 	return u
 }
 
-func (Posts) FromRequest(r *http.Request) Posts {
-	b, err := ioutil.ReadAll(r.Body)
-	check(err)
-
+func (Posts) FromRequest(ctx *fasthttp.RequestCtx) Posts {
 	u := Posts{}
-	check(u.UnmarshalJSON(b))
+	check(u.UnmarshalJSON(ctx.PostBody()))
 	return u
 }
 
-func (PostQuery) FromRequest(r *http.Request) *PostQuery {
+func (PostQuery) FromRequest(ctx *fasthttp.RequestCtx) *PostQuery {
 	var (
-		limit = r.URL.Query().Get("limit")
-		since = r.URL.Query().Get("since")
-		desc  = r.URL.Query().Get("desc")
-		sort  = r.URL.Query().Get("sort")
-		q     = &PostQuery{}
+		q = &PostQuery{}
 	)
-	q.SlugOrID = mux.Vars(r)["slug_or_id"]
-	if limit != "" {
+	if ctx.QueryArgs().Has("limit") {
 		q.Limit = new(int)
-		*q.Limit, _ = strconv.Atoi(limit)
+		*q.Limit = ctx.QueryArgs().GetUintOrZero("limit")
 	}
-	if since != "" {
-		q.Since, _ = strconv.ParseInt(since, 10, 64)
+	if ctx.QueryArgs().Has("since") {
+		raw := string(ctx.QueryArgs().Peek("since"))
+		q.Since, _ = strconv.ParseInt(raw, 10, 64)
 	}
-	if desc != "" {
+	if ctx.QueryArgs().Has("desc") {
 		q.Desc = new(bool)
-		if desc == "true" {
-			*q.Desc = true
-		}
+		*q.Desc = ctx.QueryArgs().GetBool("desc")
 	}
-	if sort != "" {
-		q.Sort = sort
+	if ctx.QueryArgs().Has("sort") {
+		q.Sort = string(ctx.QueryArgs().Peek("sort"))
 	} else {
 		q.Sort = "flat"
 	}
+	q.SlugOrID = ctx.UserValue("slug_or_id").(string)
 	return q
 }

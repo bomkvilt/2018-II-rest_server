@@ -1,9 +1,6 @@
 package models
 
-import (
-	"io/ioutil"
-	"net/http"
-)
+import "github.com/valyala/fasthttp"
 
 // easyjson:json
 type Vote struct {
@@ -12,11 +9,8 @@ type Vote struct {
 	Voice    int    `json:"voice"`
 }
 
-func (Vote) FromRequest(r *http.Request) *Vote {
-	b, err := ioutil.ReadAll(r.Body)
-	check(err)
-
+func (Vote) FromRequest(ctx *fasthttp.RequestCtx) *Vote {
 	u := &Vote{}
-	check(u.UnmarshalJSON(b))
+	check(u.UnmarshalJSON(ctx.PostBody()))
 	return u
 }

@@ -3,7 +3,8 @@ package api
 import (
 	"AForum/internal/database"
 	"encoding/json"
-	"net/http"
+
+	"github.com/valyala/fasthttp"
 )
 
 type Handler struct {
@@ -18,13 +19,13 @@ func New(db *database.DB) *Handler {
 
 // ----------------|
 
-func (h *Handler) Clear(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) Clear(ctx *fasthttp.RequestCtx) {
 	h.db.Clear()
-	response(rw, 200, nil)
+	response(ctx, 200, nil)
 }
 
-func (h *Handler) Status(rw http.ResponseWriter, r *http.Request) {
-	response(rw, 200, h.db.GetStatus())
+func (h *Handler) Status(ctx *fasthttp.RequestCtx) {
+	response(ctx, 200, h.db.GetStatus())
 }
 
 // ----------------|
@@ -35,17 +36,13 @@ func check(e error) {
 	}
 }
 
-func response(rw http.ResponseWriter, code int, payload json.Marshaler) {
+func response(ctx *fasthttp.RequestCtx, code int, payload json.Marshaler) {
 	if payload != nil {
-		b, err := payload.MarshalJSON()
-		check(err)
-
-		rw.Header().Set("content-type", "application/json")
-		rw.WriteHeader(code)
-
-		_, err = rw.Write(b)
-		check(err)
+		b, _ := payload.MarshalJSON()
+		ctx.SetContentType("application/json")
+		ctx.SetStatusCode(code)
+		ctx.Write(b)
 	} else {
-		rw.WriteHeader(code)
+		ctx.SetStatusCode(code)
 	}
 }

@@ -1,9 +1,9 @@
 package models
 
 import (
-	"io/ioutil"
-	"net/http"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 // easyjson:json
@@ -21,11 +21,8 @@ type Thread struct {
 // easyjson:json
 type Threads []*Thread
 
-func (Thread) FromRequest(r *http.Request) *Thread {
-	b, err := ioutil.ReadAll(r.Body)
-	check(err)
-
+func (Thread) FromRequest(ctx *fasthttp.RequestCtx) *Thread {
 	u := &Thread{}
-	check(u.UnmarshalJSON(b))
+	check(u.UnmarshalJSON(ctx.PostBody()))
 	return u
 }

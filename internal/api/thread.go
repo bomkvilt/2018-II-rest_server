@@ -1,73 +1,79 @@
 package api
 
 import (
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/valyala/fasthttp"
 
 	"AForum/internal/database"
 	"AForum/internal/models"
 )
 
-func (h *Handler) ThreadCreate(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) ThreadCreate(ctx *fasthttp.RequestCtx) {
 	var (
-		th   = models.Thread{}.FromRequest(r)
-		slug = mux.Vars(r)["slug"]
+		th   = models.Thread{}.FromRequest(ctx)
+		slug = ctx.UserValue("slug").(string)
 	)
+
 	switch err := h.db.CreateNewThread(slug, th); err.(type) {
 	case *database.ErrorNotFound:
 		// println(err.Error(), "ThreadCreate")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	case *database.ErrorAlreadyExist:
 		// println(err.Error(), "ThreadCreate")
-		response(rw, 409, th)
+		response(ctx, 409, th)
 	default:
-		response(rw, 201, th)
+		response(ctx, 201, th)
 	}
 }
 
-func (h *Handler) ThreadUpdate(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) ThreadUpdate(ctx *fasthttp.RequestCtx) {
 	var (
-		th  = models.Thread{}.FromRequest(r)
-		sod = mux.Vars(r)["slug_or_id"]
+		th  = models.Thread{}.FromRequest(ctx)
+		sod = ctx.UserValue("slug_or_id").(string)
 	)
+
 	if err := h.db.UpdateThread(sod, th); err != nil {
 		// println(err.Error(), "ThreadUpdate")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, th)
+		response(ctx, 200, th)
 	}
 }
 
-func (h *Handler) ThreadGetOne(rw http.ResponseWriter, r *http.Request) {
-	th, err := h.db.GetThreadBySlugOrID(mux.Vars(r)["slug_or_id"])
+func (h *Handler) ThreadGetOne(ctx *fasthttp.RequestCtx) {
+	var (
+		sod = ctx.UserValue("slug_or_id").(string)
+		th, err = h.db.GetThreadBySlugOrID(sod)
+	)
+
 	if err != nil {
 		// println(err.Error(), "ThreadGetOne")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, th)
+		response(ctx, 200, th)
 	}
 }
 
-func (h *Handler) ForumGetThreads(rw http.ResponseWriter, r *http.Request) {
-	q := models.ForumQuery{}.FromRequest(r)
+func (h *Handler) ForumGetThreads(ctx *fasthttp.RequestCtx) {
+	q := models.ForumQuery{}.FromRequest(ctx)
+
 	if ths, err := h.db.GetThreads(q); err != nil {
 		// println(err.Error(), "ForumGetThreads")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, ths)
+		response(ctx, 200, ths)
 	}
 }
 
-func (h *Handler) ThreadVote(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) ThreadVote(ctx *fasthttp.RequestCtx) {
 	var (
-		vt  = models.Vote{}.FromRequest(r)
-		sod = mux.Vars(r)["slug_or_id"]
+		vt  = models.Vote{}.FromRequest(ctx)
+		sod = ctx.UserValue("slug_or_id").(string)
 	)
+
 	if th, err := h.db.VoteThread(sod, vt); err != nil {
 		// println(err.Error(), "ThreadVote")
-		response(rw, 404, models.Error{Message: err.Error()})
+		response(ctx, 404, models.Error{Message: err.Error()})
 	} else {
-		response(rw, 200, th)
+		response(ctx, 200, th)
 	}
 }

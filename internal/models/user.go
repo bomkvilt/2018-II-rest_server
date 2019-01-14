@@ -1,9 +1,6 @@
 package models
 
-import (
-	"io/ioutil"
-	"net/http"
-)
+import "github.com/valyala/fasthttp"
 
 // easyjson:json
 type User struct {
@@ -17,11 +14,8 @@ type User struct {
 // easyjson:json
 type Users []*User
 
-func (User) FromRequest(r *http.Request) *User {
-	b, err := ioutil.ReadAll(r.Body)
-	check(err)
-
+func (User) FromRequest(ctx *fasthttp.RequestCtx) *User {
 	u := &User{}
-	check(u.UnmarshalJSON(b))
+	check(u.UnmarshalJSON(ctx.PostBody()))
 	return u
 }

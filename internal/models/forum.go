@@ -1,11 +1,9 @@
 package models
 
 import (
-	"io/ioutil"
-	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/valyala/fasthttp"
 )
 
 // easyjson:json
@@ -29,23 +27,19 @@ type ForumQuery struct {
 	Slug  string
 }
 
-func (Forum) FromRequest(r *http.Request) *Forum {
-	b, err := ioutil.ReadAll(r.Body)
-	check(err)
-
+func (Forum) FromRequest(ctx *fasthttp.RequestCtx) *Forum {
 	u := &Forum{}
-	check(u.UnmarshalJSON(b))
+	check(u.UnmarshalJSON(ctx.PostBody()))
 	return u
 }
 
-func (ForumQuery) FromRequest(r *http.Request) *ForumQuery {
+func (ForumQuery) FromRequest(ctx *fasthttp.RequestCtx) *ForumQuery {
 	var (
-		limit = r.URL.Query().Get("limit")
-		since = r.URL.Query().Get("since")
-		desc  = r.URL.Query().Get("desc")
+		limit = string(ctx.QueryArgs().Peek("limit"))
+		since = string(ctx.QueryArgs().Peek("since"))
+		desc  = string(ctx.QueryArgs().Peek("desc"))
 		q     = &ForumQuery{}
 	)
-	q.Slug = mux.Vars(r)["slug"]
 	if limit != "" {
 		q.Limit = new(int)
 		*q.Limit, _ = strconv.Atoi(limit)
@@ -56,6 +50,7 @@ func (ForumQuery) FromRequest(r *http.Request) *ForumQuery {
 			*q.Desc = true
 		}
 	}
+	q.Slug = ctx.UserValue("slug").(string)
 	q.Since = since
 	return q
 }

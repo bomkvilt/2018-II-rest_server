@@ -28,8 +28,8 @@ CREATE TABLE forums (
     FOREIGN KEY(owner) REFERENCES users(uid)
 );
 
-CREATE INDEX forums_slug ON forums USING hash (fid );
--- CREATE UNIQUE INDEX forums_id   ON forums (slug);
+CREATE INDEX forums_slug      ON forums USING hash (fid );
+CREATE UNIQUE INDEX forums_id ON forums (slug);
 
 
 DROP TABLE IF EXISTS forum_users CASCADE;
@@ -129,8 +129,9 @@ CREATE TABLE posts (
 	path		BIGINT[] NOT NULL,
 
     PRIMARY KEY(pid)
-    -- FOREIGN KEY(author) REFERENCES users(uid),
-    -- FOREIGN KEY(thread) REFERENCES threads(tid)
+    FOREIGN KEY(author) REFERENCES users(nickname),
+    FOREIGN KEY(forum)  REFERENCES forums(slug),
+    FOREIGN KEY(thread) REFERENCES threads(tid)
 );
 
 CREATE INDEX posts_main   ON posts USING hash (pid);

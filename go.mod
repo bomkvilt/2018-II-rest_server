@@ -1,6 +1,7 @@
 module AForum
 
 require (
+	github.com/buaazp/fasthttprouter v0.1.1
 	github.com/go-openapi/analysis v0.18.0 // indirect
 	github.com/go-openapi/errors v0.18.0 // indirect
 	github.com/go-openapi/jsonpointer v0.18.0 // indirect
@@ -26,6 +27,7 @@ require (
 	github.com/pkg/profile v1.2.1
 	github.com/sirupsen/logrus v1.3.0 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/valyala/fasthttp v1.1.0
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc // indirect
 	golang.org/x/net v0.0.0-20190110200230-915654e7eabc // indirect
 	golang.org/x/sys v0.0.0-20190109145017-48ac38b7c8cb // indirect
