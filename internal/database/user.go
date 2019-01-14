@@ -3,6 +3,7 @@ package database
 import (
 	"AForum/internal/models"
 	"strconv"
+	"strings"
 )
 
 // InsertNewUser -
@@ -10,15 +11,10 @@ func (db *DB) InsertNewUser(u *models.User) error {
 	tx := db.db.MustBegin()
 	defer tx.Rollback()
 
-	stmt, err := tx.Preparex(`
-	INSERT INTO users(nickname, fullname, about, email)
-	VALUES ( $1, $2, $3, $4 );
-	`)
-	if err != nil {
-		return err
-	}
-
-	if _, err := stmt.Exec(u.Nickname, u.Fullname, u.About, u.Email); err != nil {
+	if _, err := db.db.Exec(`
+		INSERT INTO users(nickname, fullname, about, email)
+		VALUES ( $1, $2, $3, $4 );
+	`, u.Nickname, u.Fullname, u.About, u.Email); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -27,9 +23,9 @@ func (db *DB) InsertNewUser(u *models.User) error {
 // GetAllCollisions -
 func (db *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
 	rows, err := db.db.Query(`
-	SELECT nickname, fullname, about, email 
-	FROM users u
-	WHERE u.nickname=$1 OR u.email=$2;
+		SELECT nickname, fullname, about, email 
+		FROM users u
+		WHERE u.nickname=$1 OR u.email=$2;
 	`, u.Nickname, u.Email)
 	if err != nil {
 		return nil, err
@@ -38,12 +34,11 @@ func (db *DB) GetAllCollisions(u *models.User) (usrs models.Users, err error) {
 
 	usrs = models.Users{}
 	for rows.Next() {
-		tmp := &models.User{}
-		err := rows.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
-		if err != nil {
+		t := &models.User{}
+		if err := rows.Scan(&t.Nickname, &t.Fullname, &t.About, &t.Email); err != nil {
 			return nil, err
 		}
-		usrs = append(usrs, tmp)
+		usrs = append(usrs, t)
 	}
 	return usrs, nil
 }
@@ -84,12 +79,10 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 	}
 
 	rows, err := db.db.Query(`
-		SELECT DISTINCT u.nickname, u.fullname, u.about, u.email
-		FROM      users   u
-		LEFT JOIN posts   p  ON(u.nickname=p.author )
-		LEFT JOIN threads t  ON(t.tid=p.thread )
-		LEFT JOIN threads t2 ON(u.uid=t2.author)
-		WHERE (t.forum=$1 OR t2.forum=$1) `+parts["since"]+`
+		SELECT u.nickname, u.fullname, u.about, u.email
+		FROM       forum_users x
+		INNER JOIN users       u ON(u.uid=x.username)
+		WHERE x.forum=$1    `+parts["since"]+`
 		ORDER BY u.nickname `+order+`
 		`+parts["limit"]+`
 	`, vars...)
@@ -100,12 +93,11 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 
 	usrs = models.Users{}
 	for rows.Next() {
-		tmp := &models.User{}
-		err := rows.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
-		if err != nil {
+		t := &models.User{}
+		if err := rows.Scan(&t.Nickname, &t.Fullname, &t.About, &t.Email); err != nil {
 			return nil, err
 		}
-		usrs = append(usrs, tmp)
+		usrs = append(usrs, t)
 	}
 	return usrs, nil
 }
@@ -117,8 +109,8 @@ func (db *DB) getUser(field string, value interface{}) (u *models.User, err erro
 	if err := db.db.QueryRow(`
 		SELECT nickname, fullname, about, email, uid 
 		FROM users 
-		WHERE `+field+`=$1;`, value).
-		Scan(&u.Nickname, &u.Fullname, &u.About, &u.Email, &u.ID); err != nil {
+		WHERE `+field+`=$1;
+	`, value).Scan(&u.Nickname, &u.Fullname, &u.About, &u.Email, &u.ID); err != nil {
 		return nil, err
 	}
 	return u, nil
@@ -137,6 +129,25 @@ func (db *DB) CheckUserByName(nick string) bool {
 		return false
 	}
 	return true
+}
+
+func (db *DB) CheckUsersByName(nicks map[string]bool) bool {
+	if len(nicks) == 0 {
+		return true
+	}
+
+	arr := make([]string, 0, len(nicks))
+	for n := range nicks {
+		arr = append(arr, `'`+n+`'`)
+	}
+	res, err := db.db.Exec(`
+		SELECT uid
+		FROM users 
+		WHERE nickname = ANY (ARRAY[` + strings.Join(arr, ", ") + `])
+	`)
+	check(err)
+	rws, _ := res.RowsAffected()
+	return rws == int64(len(arr))
 }
 
 // ----------------|

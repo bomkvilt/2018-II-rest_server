@@ -2,7 +2,9 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/lib/pq"
 
@@ -19,6 +21,10 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 		return NotFound(err)
 	}
 
+	if len(ps) == 0 {
+		return nil
+	}
+
 	parentsSet := map[int64]bool{}
 	authorsSet := map[string]bool{}
 	for _, p := range ps {
@@ -29,7 +35,6 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 	}
 
 	parents := map[int64]*models.Post{}
-	// authors := map[string]*models.User{}
 	for pid := range parentsSet {
 		pr, err := m.GetPostByID(pid)
 		if err != nil {
@@ -40,46 +45,58 @@ func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 		}
 		parents[pid] = pr
 	}
-	for nick := range authorsSet {
-		// u, err := m.GetUserByName(nick)
-		// if err != nil {
-		if !m.CheckUserByName(nick) {
-			return NotFound(errors.New("Can't find post author by nickname: " + nick))
-		}
-		// authors[nick] = u
+	if !m.CheckUsersByName(authorsSet) {
+		return NotFound(errors.New("Can't find post author"))
 	}
 
-	tx := m.db.MustBegin()
-	defer tx.Rollback()
 	for _, p := range ps {
-		// u := authors[p.Author]
-		r := parents[p.Parent]
-		// p.Author = u.Nickname
 		p.Thread = t.ID
 		p.Forum = f.Slug
-
-		if r != nil {
+		if r := parents[p.Parent]; r != nil {
 			p.Path = r.Path
 		} else {
 			p.Path = []int64{}
 		}
+	}
+	b, a := m.postQueryBuilder(ps, t.ID, created)
 
-		if err := tx.QueryRow(`
-			INSERT INTO posts(author, thread, message, parent, isEdited, created, path, forum)
-			VALUES           ($1    , $2    , $3     , $4    , false   , $5     , $6  , $7   )
-			RETURNING created, pid
-		`, p.Author, t.ID, p.Message, p.Parent, created, pq.Array(p.Path), p.Forum).Scan(&p.Created, &p.ID); err != nil {
+	//
+	tx := m.db.MustBegin()
+	defer tx.Rollback()
+
+	rows, err := m.db.Query(b.String(), a...)
+	if err != nil {
+		return Conflict(err)
+	}
+	defer rows.Close()
+
+	for _, p := range ps {
+		rows.Next()
+		if err := rows.Scan(&p.Created, &p.ID); err != nil {
 			return Conflict(err)
 		}
 	}
-	if _, err := tx.Exec(`
-		UPDATE forums 
-		SET postCount=postCount+$2 
-		WHERE fid=$1
-	`, f.ID, len(ps)); err != nil {
-		return err
-	}
 	return tx.Commit()
+}
+
+func (m *DB) postQueryBuilder(ps models.Posts, tid int, created string) (*strings.Builder, []interface{}) {
+	b := &strings.Builder{}
+	a := []interface{}{}
+
+	b.WriteString("INSERT INTO posts(author, thread, message, parent, isEdited, created, path, forum) VALUES ")
+	for i, p := range ps {
+		if i != 0 {
+			b.WriteString(", ")
+		}
+
+		c := 7 * i
+		b.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d, false, $%d, $%d, $%d)",
+			c+1, c+2, c+3, c+4, c+5, c+6, c+7))
+		a = append(a, p.Author, tid, p.Message, p.Parent, created, pq.Array(p.Path), p.Forum)
+	}
+	b.WriteString("RETURNING created, pid")
+
+	return b, a
 }
 
 // GetPosts -
@@ -176,7 +193,7 @@ func (m *DB) GetPostByID(pid int64) (*models.Post, error) {
 		FROM posts 
 		WHERE pid=$1
 	`, pid).Scan(&p.Author, &p.Created, &p.Forum, &p.ID, &p.IsEdited, &p.Message, &p.Parent, &p.Thread, pq.Array(&p.Path)); err != nil {
-		println(err.Error())
+		println(err.Error(), "GetPostByID")
 		return nil, NotFound(err)
 	}
 	return p, nil
@@ -220,16 +237,10 @@ func (m *DB) GetPost(pid int64, related []string) (*models.PostFull, error) {
 
 // UpdatePost -
 func (m *DB) UpdatePost(p *models.Post) error {
-	cp, err := m.GetPostByID(p.ID)
-	if err != nil {
-		return err
-	}
-
-	if p.Message != "" && cp.Message != p.Message {
+	if p.Message != "" {
 		if _, err := m.db.Exec(`
 			UPDATE posts
-			SET message  = COALESCE(NULLIF($1,''), message),
-				isEdited = true
+			SET message = $1
 			WHERE pid = $2
 		`, p.Message, p.ID); err != nil {
 			return err

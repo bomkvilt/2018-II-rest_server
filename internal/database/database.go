@@ -44,7 +44,7 @@ func New() *DB {
 }
 
 func (m *DB) Clear() {
-	m.db.Exec(`TRUNCATE users, forums, threads, votes, posts`)
+	m.db.Exec(`TRUNCATE users, forum_users, forums, threads, votes, posts`)
 }
 
 func (m *DB) GetStatus() *models.Status {
