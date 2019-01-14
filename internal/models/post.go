@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// easyjson:json
 type Post struct {
 	ID       int64     `json:"id,omitempty"`
 	Author   string    `json:"author"`
@@ -19,10 +20,13 @@ type Post struct {
 	Message  string    `json:"message"`
 	Parent   int64     `json:"parent,omitempty"`
 	Thread   int       `json:"thread,omitempty"`
+	Path     []int64   `json:"-"`
 }
 
+// easyjson:json
 type Posts []*Post
 
+// easyjson:json
 type PostFull struct {
 	Author *User   `json:"author,omitempty"`
 	Forum  *Forum  `json:"forum,omitempty"`
@@ -30,6 +34,7 @@ type PostFull struct {
 	Thread *Thread `json:"thread,omitempty"`
 }
 
+// easyjson:json
 type PostQuery struct {
 	Desc     *bool
 	Limit    *int

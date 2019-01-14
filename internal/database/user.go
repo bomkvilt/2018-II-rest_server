@@ -86,7 +86,7 @@ func (db *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err e
 	rows, err := db.db.Query(`
 		SELECT DISTINCT u.nickname, u.fullname, u.about, u.email
 		FROM      users   u
-		LEFT JOIN posts   p  ON(u.uid=p.author )
+		LEFT JOIN posts   p  ON(u.nickname=p.author )
 		LEFT JOIN threads t  ON(t.tid=p.thread )
 		LEFT JOIN threads t2 ON(u.uid=t2.author)
 		WHERE (t.forum=$1 OR t2.forum=$1) `+parts["since"]+`
@@ -126,6 +126,18 @@ func (db *DB) getUser(field string, value interface{}) (u *models.User, err erro
 func (db *DB) GetUserByName(nick string) (*models.User, error)   { return db.getUser("nickname", nick) }
 func (db *DB) GetUserByEmail(email string) (*models.User, error) { return db.getUser("email", email) }
 func (db *DB) GetUserByID(uid int64) (*models.User, error)       { return db.getUser("uid", uid) }
+
+func (db *DB) CheckUserByName(nick string) bool {
+	dm := 0
+	if err := db.db.QueryRow(`
+		SELECT uid 
+		FROM users 
+		WHERE nickname=$1;`, nick).
+		Scan(&dm); err != nil {
+		return false
+	}
+	return true
+}
 
 // ----------------|
 

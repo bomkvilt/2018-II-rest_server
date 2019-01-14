@@ -5,6 +5,7 @@
 .vscode/
 
 # Output
+pro/
 tech-db-forum*
 report*.html
 perf.data*
@@ -14,5 +15,6 @@ debug
 debug.test
 
 # generation
+cmd.exe
 *.log
 *.tmp

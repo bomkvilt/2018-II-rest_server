@@ -4,11 +4,12 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/lib/pq"
+
 	"AForum/internal/models"
 )
 
-// CreateNewPost -
-func (m *DB) CreateNewPost(SlugOrID, created string, p *models.Post) error {
+func (m *DB) CreateNewPosts(SlugOrID, created string, ps models.Posts) error {
 	t, err := m.GetThreadBySlugOrID(SlugOrID)
 	if err != nil {
 		return NotFound(errors.New("Can't find post thread by id: " + SlugOrID))
@@ -17,56 +18,65 @@ func (m *DB) CreateNewPost(SlugOrID, created string, p *models.Post) error {
 	if err != nil {
 		return NotFound(err)
 	}
-	u, err := m.GetUserByName(p.Author)
-	if err != nil {
-		return NotFound(errors.New("Can't find post author by nickname: " + p.Author))
-	}
-	p.Author = u.Nickname
-	p.Thread = t.ID
-	p.Forum = f.Slug
 
-	{
+	parentsSet := map[int64]bool{}
+	authorsSet := map[string]bool{}
+	for _, p := range ps {
 		if p.Parent != 0 {
-			pr, err := m.GetPostByID(p.Parent)
-			if err != nil {
-				return Conflict(errors.New("Parent not found"))
-			}
-			if pr.Thread != p.Thread {
-				return Conflict(errors.New("Parent post was created in another thread"))
-			}
+			parentsSet[p.Parent] = true
 		}
+		authorsSet[p.Author] = true
+	}
+
+	parents := map[int64]*models.Post{}
+	// authors := map[string]*models.User{}
+	for pid := range parentsSet {
+		pr, err := m.GetPostByID(pid)
+		if err != nil {
+			return Conflict(errors.New("Parent not found " + strconv.FormatInt(pid, 10)))
+		}
+		if pr.Thread != t.ID {
+			return Conflict(errors.New("Parent post was created in another thread"))
+		}
+		parents[pid] = pr
+	}
+	for nick := range authorsSet {
+		// u, err := m.GetUserByName(nick)
+		// if err != nil {
+		if !m.CheckUserByName(nick) {
+			return NotFound(errors.New("Can't find post author by nickname: " + nick))
+		}
+		// authors[nick] = u
 	}
 
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
-	if err := tx.QueryRow(`
-		INSERT INTO posts(author, thread, message, parent, isEdited, created, path)
-		VALUES ($1, $2, $3, $4, false, $5, ARRAY[]::BIGINT[])
-		RETURNING created, pid
-	`, u.ID, t.ID, p.Message, p.Parent, created).Scan(&p.Created, &p.ID); err != nil {
-		return AlreadyExist(err)
-	}
-	if p.Parent != 0 {
-		if _, err := tx.Exec(`
-			UPDATE posts
-			SET path=(SELECT path FROM posts WHERE pid = $2) || $1::BIGINT
-			WHERE pid=$1
-		`, p.ID, p.Parent); err != nil {
-			return err
+	for _, p := range ps {
+		// u := authors[p.Author]
+		r := parents[p.Parent]
+		// p.Author = u.Nickname
+		p.Thread = t.ID
+		p.Forum = f.Slug
+
+		if r != nil {
+			p.Path = r.Path
+		} else {
+			p.Path = []int64{}
 		}
-	} else {
-		if _, err := tx.Exec(`
-			UPDATE posts
-			SET path=ARRAY[$1]
-			WHERE pid=$1
-		`, p.ID); err != nil {
-			return err
+
+		if err := tx.QueryRow(`
+			INSERT INTO posts(author, thread, message, parent, isEdited, created, path, forum)
+			VALUES           ($1    , $2    , $3     , $4    , false   , $5     , $6  , $7   )
+			RETURNING created, pid
+		`, p.Author, t.ID, p.Message, p.Parent, created, pq.Array(p.Path), p.Forum).Scan(&p.Created, &p.ID); err != nil {
+			return Conflict(err)
 		}
 	}
 	if _, err := tx.Exec(`
 		UPDATE forums 
-		SET postCount=postCount+1 
-		WHERE fid=$1`, f.ID); err != nil {
+		SET postCount=postCount+$2 
+		WHERE fid=$1
+	`, f.ID, len(ps)); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -94,7 +104,7 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 	switch params.Sort {
 	case "flat":
 		if params.Since != nil {
-			parts["since"] = "AND p.pid" + sign + "$" + strconv.Itoa(len(vars)+1)
+			parts["since"] = "AND pid" + sign + "$" + strconv.Itoa(len(vars)+1)
 			vars = append(vars, params.Since)
 		}
 		if params.Limit != nil {
@@ -102,8 +112,8 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 			vars = append(vars, params.Limit)
 		}
 		parts["tail"] = `
-			WHERE p.thread=$1 ` + parts["since"] + `
-			ORDER BY p.pid ` + order + `
+			WHERE thread=$1 ` + parts["since"] + `
+			ORDER BY pid    ` + order + `
 			` + parts["limit"]
 	case "tree":
 		if params.Since != nil {
@@ -115,8 +125,8 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 			vars = append(vars, params.Limit)
 		}
 		parts["tail"] = `
-			WHERE p.thread=$1 ` + parts["since"] + `
-			ORDER BY p.path ` + order + `
+			WHERE thread=$1 ` + parts["since"] + `
+			ORDER BY path   ` + order + `
 			` + parts["limit"]
 	case "parent_tree":
 		if params.Since != nil {
@@ -128,19 +138,16 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 			vars = append(vars, params.Limit)
 		}
 		parts["tail"] = `
-			WHERE p.path[1] IN (
-				SELECT pid FROM posts p
+			WHERE path[1] IN (
+				SELECT pid FROM posts
 				WHERE thread=$1 AND parent=0 ` + parts["since"] + `
-				ORDER BY p.path[1] ` + order + `
+				ORDER BY path[1] ` + order + `
 				` + parts["limit"] + `
-			) ORDER BY p.path[1] ` + order + `, p.path ASC`
+			) ORDER BY path[1] ` + order + `, path ASC`
 	}
 	rows, err := m.db.Query(`
-		SELECT u.nickname, p.created, f.slug, p.pid, p.isEdited, p.message, p.parent
-		FROM posts   p
-		JOIN users   u ON p.author=u.uid
-		JOIN threads t ON p.thread=t.tid
-		JOIN forums  f ON t.forum=f.fid
+		SELECT author, created, forum, pid, isEdited, message, parent, thread, path
+		FROM posts
 		`+parts["tail"]+`
 	`, vars...)
 	if err != nil {
@@ -150,13 +157,13 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 
 	res = models.Posts{}
 	for rows.Next() {
-		tmp := &models.Post{
+		t := &models.Post{
 			Thread: th.ID,
 		}
-		if err := rows.Scan(&tmp.Author, &tmp.Created, &tmp.Forum, &tmp.ID, &tmp.IsEdited, &tmp.Message, &tmp.Parent); err != nil {
+		if err := rows.Scan(&t.Author, &t.Created, &t.Forum, &t.ID, &t.IsEdited, &t.Message, &t.Parent, &t.Thread, pq.Array(&t.Path)); err != nil {
 			return nil, err
 		}
-		res = append(res, tmp)
+		res = append(res, t)
 	}
 	return res, nil
 }
@@ -164,14 +171,12 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 // GetPostByID -
 func (m *DB) GetPostByID(pid int64) (*models.Post, error) {
 	p := &models.Post{}
-	if err := m.db.QueryRowx(`
-		SELECT u.nickname AS author, p.created, f.slug AS forum, p.pid AS id, p.isEdited, p.message, p.parent, t.tid AS thread
-		FROM posts   p
-		JOIN users   u ON(u.uid=p.author)
-		JOIN threads t ON(t.tid=p.thread)
-		JOIN forums  f ON(f.fid=t.forum )
-		WHERE p.pid=$1
-	`, pid).StructScan(p); err != nil {
+	if err := m.db.QueryRow(`
+		SELECT   author   , created   , forum   , pid  , isEdited   , message   , parent   , thread   , path 
+		FROM posts 
+		WHERE pid=$1
+	`, pid).Scan(&p.Author, &p.Created, &p.Forum, &p.ID, &p.IsEdited, &p.Message, &p.Parent, &p.Thread, pq.Array(&p.Path)); err != nil {
+		println(err.Error())
 		return nil, NotFound(err)
 	}
 	return p, nil

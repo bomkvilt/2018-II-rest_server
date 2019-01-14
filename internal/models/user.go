@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// easyjson:json
 type User struct {
 	ID       int64  `json:"-"`
 	About    string `json:"about"`
@@ -14,6 +15,7 @@ type User struct {
 	Nickname string `json:"nickname"`
 }
 
+// easyjson:json
 type Users []*User
 
 func (User) FromRequest(r *http.Request) *User {

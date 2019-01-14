@@ -29,13 +29,17 @@ func (m *DB) CreateNewForum(f *models.Forum) error {
 
 func (m *DB) getForum(field string, value interface{}) (f *models.Forum, err error) {
 	f = &models.Forum{}
+	dm := new(string)
 	if err := m.db.QueryRow(`
 		SELECT nickname, title, slug, postCount, threadCount, fid
 		FROM forums f
 		JOIN users  u ON f.owner=u.uid
 		WHERE `+field+`=$1;`, value).
-		Scan(&f.Author, &f.Title, &f.Slug, &f.Posts, &f.Threads, &f.ID); err != nil {
+		Scan(&f.Author, &f.Title, &dm, &f.Posts, &f.Threads, &f.ID); err != nil {
 		return nil, err
+	}
+	if dm != nil {
+		f.Slug = *dm
 	}
 	return f, nil
 }

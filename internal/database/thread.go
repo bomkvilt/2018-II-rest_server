@@ -196,6 +196,7 @@ func (m *DB) GetThreads(q *models.ForumQuery) (res models.Threads, err error) {
 		parts["limit"] = "LIMIT $" + strconv.Itoa(len(vars)+1)
 		vars = append(vars, q.Limit)
 	}
+
 	rows, err := m.db.Query(`
 		SELECT u.nickname, t.created, t.tid, t.message, t.slug, t.title, t.votes
 		FROM threads t
@@ -211,11 +212,15 @@ func (m *DB) GetThreads(q *models.ForumQuery) (res models.Threads, err error) {
 
 	res = models.Threads{}
 	for rows.Next() {
-		tmp := &models.Thread{Forum: f.Slug}
-		if err := rows.Scan(&tmp.Author, &tmp.Created, &tmp.ID, &tmp.Message, &tmp.Slug, &tmp.Title, &tmp.Votes); err != nil {
+		s := new(string)
+		t := &models.Thread{Forum: f.Slug}
+		if err := rows.Scan(&t.Author, &t.Created, &t.ID, &t.Message, &s, &t.Title, &t.Votes); err != nil {
 			return nil, err
 		}
-		res = append(res, tmp)
+		if s != nil {
+			t.Slug = *s
+		}
+		res = append(res, t)
 	}
 	return res, nil
 }

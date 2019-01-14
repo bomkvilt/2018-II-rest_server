@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// easyjson:json
 type Vote struct {
 	ID       int    `json:"id"`
 	Nickname string `json:"nickname"`

@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// easyjson:json
 type Forum struct {
 	ID      int    `json:"-"`
 	Posts   int    `json:"posts"`
@@ -18,8 +19,10 @@ type Forum struct {
 	Author  string `json:"user"`
 }
 
+// easyjson:json
 type Forums []*Forum
 
+// easyjson:json
 type ForumQuery struct {
 	Desc  *bool
 	Limit *int

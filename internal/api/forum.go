@@ -25,16 +25,16 @@ func (h *Handler) ForumCreate(rw http.ResponseWriter, r *http.Request) {
 func (h *Handler) ForumGetOne(rw http.ResponseWriter, r *http.Request) {
 	if f, err := h.db.GetForumBySlug(mux.Vars(r)["slug"]); err == nil {
 		response(rw, 200, f)
-		return
+	} else {
+		response(rw, 404, models.Error{Message: err.Error()})
 	}
-	response(rw, 404, models.Error{Message: ""})
 }
 
 func (h *Handler) ForumGetUsers(rw http.ResponseWriter, r *http.Request) {
 	q := models.ForumQuery{}.FromRequest(r)
 	res, err := h.db.GetForumUsers(q)
 	if err != nil {
-		response(rw, 404, models.Error{Message: ""})
+		response(rw, 404, models.Error{Message: err.Error()})
 		return
 	}
 	if res == nil {

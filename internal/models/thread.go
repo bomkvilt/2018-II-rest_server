@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// easyjson:json
 type Thread struct {
 	ID      int       `json:"id"`
 	Author  string    `json:"author"`
@@ -18,6 +19,7 @@ type Thread struct {
 	Votes   int       `json:"votes"`
 }
 
+// easyjson:json
 type Threads []*Thread
 
 func (Thread) FromRequest(r *http.Request) *Thread {
