@@ -136,11 +136,12 @@ CREATE TABLE posts (
     FOREIGN KEY(thread) REFERENCES threads(tid)
 );
 
-CREATE INDEX posts_main   ON posts USING hash (pid);
-CREATE INDEX posts_root   ON posts (root);
-CREATE INDEX posts_path   ON posts (path);
-CREATE INDEX posts_thread ON posts (thread);
-CREATE INDEX posts_sort   ON posts (path, created);
+CREATE INDEX posts_main      ON posts USING hash (pid); -- parent_tree, flat
+CREATE INDEX posts_root      ON posts (root);           -- parent_tree
+CREATE INDEX posts_path      ON posts (path);           --
+CREATE INDEX posts_thread    ON posts (thread);         -- flat
+CREATE INDEX posts_thread_id ON posts (thread, pid);    -- flat
+CREATE INDEX posts_sort      ON posts (path, created);  -- 
 
 ----
 CREATE OR REPLACE FUNCTION on_post() RETURNS TRIGGER AS $BODY$ BEGIN

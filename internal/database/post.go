@@ -146,8 +146,8 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 	case "flat":
 		q.WriteString(`
 			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
-			FROM posts
-			WHERE thread = $1`)
+			FROM (
+				SELECT * FROM posts WHERE thread = $1`)
 		if params.Since != 0 {
 			if params.Desc != nil && *params.Desc {
 				q.WriteString(" AND pid < $2")
@@ -157,6 +157,7 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 		} else {
 			q.WriteString(" AND $2 = 0")
 		}
+		q.WriteString(") x")
 		if params.Desc != nil && *params.Desc {
 			q.WriteString(" ORDER BY pid DESC")
 		} else {
