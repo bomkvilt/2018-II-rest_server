@@ -2,6 +2,7 @@ package router
 
 import (
 	// "time"
+	// "fmt"
 	"AForum/internal/api"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
@@ -40,9 +41,10 @@ func New(h *api.Handler) fasthttp.RequestHandler {
 
 	return func(ctx *fasthttp.RequestCtx) {
 		// defer func (t time.Time) {
-		// 	ms := time.Since(t) / time.Microsecond
-		// 	if ms > 60*1000 {
-		// 		println(ms, string(ctx.Path())+string(ctx.URI().QueryString()))
+		// 	ms := time.Since(t)
+		// 	if ms > 60*time.Millisecond {
+		// 		path := string(ctx.Path()) + "?" + string(ctx.URI().QueryString())
+		// 		fmt.Println("----------| ", ms, " |--------| ", path)
 		// 	}
 		// }(time.Now())
 

@@ -5,13 +5,13 @@ import (
 	"AForum/internal/database"
 	"AForum/internal/router"
 
-	"github.com/pkg/profile"
+	// "github.com/pkg/profile"
 	"github.com/valyala/fasthttp"
 )
 
 func main() {
-	defer profile.Start(profile.CPUProfile, profile.ProfilePath("./pro")).Stop()
-	defer func() { println("----------------------------------------------") }()
+	// defer profile.Start(profile.CPUProfile, profile.ProfilePath("./pro")).Stop()
+	// defer func() { println("----------------------------------------------") }()
 
 	var (
 		d = database.New()

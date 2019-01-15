@@ -24,7 +24,7 @@ require (
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/pkg/profile v1.2.1
+	github.com/pkg/profile v1.2.1 // indirect
 	github.com/sirupsen/logrus v1.3.0 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/valyala/fasthttp v1.1.0

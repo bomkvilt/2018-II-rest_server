@@ -127,16 +127,17 @@ CREATE TABLE posts (
     message     TEXT,       -- 
     isEdited    BOOLEAN,    -- A/
     created     TIMESTAMP,  -- 
+    root        BIGINT,     -- A/
 	path		BIGINT[] NOT NULL,
 
-    PRIMARY KEY(pid)
+    PRIMARY KEY(pid),
     FOREIGN KEY(author) REFERENCES users(nickname),
     FOREIGN KEY(forum)  REFERENCES forums(slug),
     FOREIGN KEY(thread) REFERENCES threads(tid)
 );
 
 CREATE INDEX posts_main   ON posts USING hash (pid);
-CREATE INDEX posts_root   ON posts ((path[1]));
+CREATE INDEX posts_root   ON posts (root);
 CREATE INDEX posts_path   ON posts (path);
 CREATE INDEX posts_thread ON posts (thread);
 CREATE INDEX posts_sort   ON posts (path, created);
@@ -145,6 +146,7 @@ CREATE INDEX posts_sort   ON posts (path, created);
 CREATE OR REPLACE FUNCTION on_post() RETURNS TRIGGER AS $BODY$ BEGIN
     -- fix path
     new.path = new.path || new.pid;
+    new.root = new.path[1];
     RETURN new;
 END; 
 $BODY$ LANGUAGE plpgsql;

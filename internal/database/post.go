@@ -1,13 +1,11 @@
 package database
 
 import (
-	// "time"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx"
 	"github.com/lib/pq"
 
 	"AForum/internal/models"
@@ -187,15 +185,16 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 		q.WriteString(" LIMIT $3")
 	case "parent_tree":
 		q.WriteString(`
-			SELECT string_agg(pid::text, ', ')
-			FROM (
-				SELECT pid FROM posts
-				WHERE thread=$1 AND parent=0`)
+		SELECT author, created, forum, pid, isEdited, message, parent, thread, path
+		FROM posts
+		WHERE root IN (
+			SELECT pid FROM posts
+			WHERE thread=$1 AND parent=0`)
 		if params.Since != 0 {
 			if params.Desc != nil && *params.Desc {
-				q.WriteString(" AND pid < (SELECT path[1] FROM posts WHERE pid = $2)")
+				q.WriteString(" AND pid < (SELECT root FROM posts WHERE pid = $2)")
 			} else {
-				q.WriteString(" AND pid > (SELECT path[1] FROM posts WHERE pid = $2)")
+				q.WriteString(" AND pid > (SELECT root FROM posts WHERE pid = $2)")
 			}
 		} else {
 			q.WriteString(" AND $2 = 0")
@@ -205,54 +204,35 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 		} else {
 			q.WriteString(" ORDER BY pid ASC")
 		}
-		q.WriteString(" LIMIT $3) x")
-	}
-
-	// t := time.Now()
-
-	tx, _ := m.db.Begin()
-	defer tx.Rollback()
-
-	// t1 := time.Since(t) / time.Microsecond
-	
-	var rows *pgx.Rows
-	if params.Sort == "parent_tree" {
-		var points string
-		tx.QueryRow(q.String(), th.ID, params.Since, params.Limit).Scan(&points)
-
-		q.Reset()
-		q.WriteString(`
-			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
-			FROM posts
-			WHERE path[1] = ANY ('{ `+points+` }'::BIGINT[])`)
+		q.WriteString(" LIMIT $3)")
 		if params.Desc != nil && *params.Desc {
-			q.WriteString(" ORDER BY path[1] DESC, path")
+			q.WriteString(" ORDER BY root DESC, path")
 		} else {
-			q.WriteString(" ORDER BY path[1] ASC, path")
+			q.WriteString(" ORDER BY root ASC, path")
 		}
-		rows, err = tx.Query(q.String())
-	} else {
-		rows, err = tx.Query(q.String(), th.ID, params.Since, params.Limit)
 	}
-	if err != nil {
-		return nil, err
-	}
+
+	// t0 := time.Now()
+	// tt := make([]time.Duration, 0, 20)
+
+	rows, err := m.db.Query(q.String(), th.ID, params.Since, params.Limit)
+	check(err)
 	defer rows.Close()
 
-	// t2 := time.Since(t) / time.Microsecond
+	// tt = append(tt, time.Since(t0))
 
 	res = make(models.Posts, 0, 20)
 	for rows.Next() {
-		t := &models.Post{}
-		t.Thread = th.ID
+		t := &models.Post{Thread: th.ID}
 		rows.Scan(&t.Author, &t.Created, &t.Forum, &t.ID, &t.IsEdited, &t.Message, &t.Parent, &t.Thread, pq.Array(&t.Path))
 		res = append(res, t)
+
+		// tt = append(tt, time.Since(t0))
 	}
-
-	// t3 := time.Since(t) / time.Microsecond
-	// println(t1, t2, t3, "------------")
-
-	return res, tx.Commit()
+	// if time.Since(t0) > 60*time.Millisecond {
+	// 	fmt.Println(time.Since(t0), tt)
+	// }
+	return res, nil
 }
 
 // GetPostByID -
