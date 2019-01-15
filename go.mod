@@ -14,11 +14,11 @@ require (
 	github.com/go-openapi/validate v0.18.0 // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
-	github.com/gorilla/handlers v1.4.0
-	github.com/gorilla/mux v1.6.2
+	github.com/gorilla/handlers v1.4.0 // indirect
+	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/jackc/pgx v3.3.0+incompatible
 	github.com/jessevdk/go-flags v1.4.0 // indirect
-	github.com/jmoiron/sqlx v1.2.0
+	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.0.0
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329

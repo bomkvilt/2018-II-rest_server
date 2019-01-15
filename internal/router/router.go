@@ -1,6 +1,7 @@
 package router
 
 import (
+	// "time"
 	"AForum/internal/api"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
@@ -38,6 +39,13 @@ func New(h *api.Handler) fasthttp.RequestHandler {
 	r.POST(`/api/service/clear`, h.Clear)
 
 	return func(ctx *fasthttp.RequestCtx) {
+		// defer func (t time.Time) {
+		// 	ms := time.Since(t) / time.Microsecond
+		// 	if ms > 60*1000 {
+		// 		println(ms, string(ctx.Path())+string(ctx.URI().QueryString()))
+		// 	}
+		// }(time.Now())
+
 		path := string(ctx.Path())
 		if path == "/api/forum/create" {
 			h.ForumCreate(ctx)

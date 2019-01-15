@@ -76,7 +76,6 @@ func (m *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err er
 	}
 	rows, err := m.db.Query(q.String(), params.Slug, params.Since, params.Limit)
 	if err != nil {
-		println(err.Error())
 		return nil, err
 	}
 	defer rows.Close()

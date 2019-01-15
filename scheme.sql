@@ -12,7 +12,8 @@ CREATE TABLE users (
     PRIMARY KEY(uid)
 );
 
-CREATE INDEX users_main ON users USING hash (nickname);
+CREATE INDEX users_uid  ON users USING hash (uid);
+CREATE INDEX users_nick ON users USING hash (nickname);
 
 -----------------------------| forum |-----------------------------
 
@@ -135,6 +136,7 @@ CREATE TABLE posts (
 );
 
 CREATE INDEX posts_main   ON posts USING hash (pid);
+CREATE INDEX posts_root   ON posts ((path[1]));
 CREATE INDEX posts_path   ON posts (path);
 CREATE INDEX posts_thread ON posts (thread);
 CREATE INDEX posts_sort   ON posts (path, created);

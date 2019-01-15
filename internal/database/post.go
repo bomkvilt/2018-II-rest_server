@@ -1,11 +1,13 @@
 package database
 
 import (
+	// "time"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx"
 	"github.com/lib/pq"
 
 	"AForum/internal/models"
@@ -185,9 +187,8 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 		q.WriteString(" LIMIT $3")
 	case "parent_tree":
 		q.WriteString(`
-			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
-			FROM posts
-			WHERE path[1] IN (
+			SELECT string_agg(pid::text, ', ')
+			FROM (
 				SELECT pid FROM posts
 				WHERE thread=$1 AND parent=0`)
 		if params.Since != 0 {
@@ -204,26 +205,54 @@ func (m *DB) GetPosts(params *models.PostQuery) (res models.Posts, err error) {
 		} else {
 			q.WriteString(" ORDER BY pid ASC")
 		}
-		q.WriteString(" LIMIT $3)")
+		q.WriteString(" LIMIT $3) x")
+	}
+
+	// t := time.Now()
+
+	tx, _ := m.db.Begin()
+	defer tx.Rollback()
+
+	// t1 := time.Since(t) / time.Microsecond
+	
+	var rows *pgx.Rows
+	if params.Sort == "parent_tree" {
+		var points string
+		tx.QueryRow(q.String(), th.ID, params.Since, params.Limit).Scan(&points)
+
+		q.Reset()
+		q.WriteString(`
+			SELECT author, created, forum, pid, isEdited, message, parent, thread, path
+			FROM posts
+			WHERE path[1] = ANY ('{ `+points+` }'::BIGINT[])`)
 		if params.Desc != nil && *params.Desc {
 			q.WriteString(" ORDER BY path[1] DESC, path")
 		} else {
 			q.WriteString(" ORDER BY path[1] ASC, path")
 		}
+		rows, err = tx.Query(q.String())
+	} else {
+		rows, err = tx.Query(q.String(), th.ID, params.Since, params.Limit)
 	}
-	rows, err := m.db.Query(q.String(), th.ID, params.Since, params.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	res = models.Posts{}
+	// t2 := time.Since(t) / time.Microsecond
+
+	res = make(models.Posts, 0, 20)
 	for rows.Next() {
-		t := &models.Post{Thread: th.ID}
+		t := &models.Post{}
+		t.Thread = th.ID
 		rows.Scan(&t.Author, &t.Created, &t.Forum, &t.ID, &t.IsEdited, &t.Message, &t.Parent, &t.Thread, pq.Array(&t.Path))
 		res = append(res, t)
 	}
-	return res, nil
+
+	// t3 := time.Since(t) / time.Microsecond
+	// println(t1, t2, t3, "------------")
+
+	return res, tx.Commit()
 }
 
 // GetPostByID -
@@ -234,7 +263,7 @@ func (m *DB) GetPostByID(pid int64) (*models.Post, error) {
 		FROM posts 
 		WHERE pid=$1
 	`, pid).Scan(&p.Author, &p.Created, &p.Forum, &p.ID, &p.IsEdited, &p.Message, &p.Parent, &p.Thread, pq.Array(&p.Path)); err != nil {
-		println(err.Error(), "GetPostByID")
+		// println(err.Error(), "GetPostByID")
 		return nil, NotFound(err)
 	}
 	return p, nil
