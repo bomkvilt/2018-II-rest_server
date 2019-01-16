@@ -50,24 +50,30 @@ func (m *DB) GetForumUsers(params *models.ForumQuery) (usrs models.Users, err er
 
 	q := strings.Builder{}
 	q.WriteString(`
-		SELECT u.nickname, u.fullname, u.about, u.email
-		FROM       forum_users x
-		INNER JOIN users       u ON(u.uid=x.username)
-		INNER JOIN forums      f ON(f.fid=x.forum)
-		WHERE f.slug=$1`)
+		SELECT nickname, fullname, about, email
+		FROM users
+		WHERE uid IN (
+			SELECT username
+			FROM forum_users
+			WHERE forum IN (
+				SELECT fid 
+				FROM forums
+				WHERE slug=$1
+			)
+		)`)
 	if params.Since != "" {
 		if params.Desc != nil && *params.Desc {
-			q.WriteString(" AND u.nickname < $2")
+			q.WriteString(" AND nickname < $2")
 		} else {
-			q.WriteString(" AND u.nickname > $2")
+			q.WriteString(" AND nickname > $2")
 		}
 	} else {
 		q.WriteString(" AND $2=''")
 	}
 	if params.Desc != nil && *params.Desc {
-		q.WriteString(" ORDER BY u.nickname DESC")
+		q.WriteString(" ORDER BY nickname DESC")
 	} else {
-		q.WriteString(" ORDER BY u.nickname ASC")
+		q.WriteString(" ORDER BY nickname ASC")
 	}
 	if params.Limit != nil {
 		q.WriteString(" LIMIT $3")

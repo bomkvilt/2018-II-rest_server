@@ -1,8 +1,10 @@
 package router
 
 import (
-	// "time"
+	"time"
 	// "fmt"
+	"sync"
+	"regexp"
 	"AForum/internal/api"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
@@ -11,6 +13,10 @@ import (
 type Router struct {
 	fasthttprouter.Router
 }
+
+var re, _ = regexp.Compile("/[+\\w-.]+/")
+var Times = map[string]time.Duration{}
+var MTime = sync.Mutex{}
 
 func New(h *api.Handler) fasthttp.RequestHandler {
 	r := &Router{
@@ -42,9 +48,14 @@ func New(h *api.Handler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// defer func (t time.Time) {
 		// 	ms := time.Since(t)
-		// 	if ms > 60*time.Millisecond {
+		// 	if ms > 10*time.Millisecond {
 		// 		path := string(ctx.Path()) + "?" + string(ctx.URI().QueryString())
 		// 		fmt.Println("----------| ", ms, " |--------| ", path)
+
+		// 		MTime.Lock()
+		// 		p := re.ReplaceAllString(string(ctx.Path()), "/+/")
+		// 		Times[p] = Times[p] + ms
+		// 		MTime.Unlock()
 		// 	}
 		// }(time.Now())
 
